@@ -6,9 +6,9 @@
 [![Built with Foundry](https://img.shields.io/badge/Built%20with-Foundry-orange)](https://book.getfoundry.sh/)
 [![Deployed](https://img.shields.io/badge/Contract-Deployed-brightgreen)](https://explorer.evm.testnet.iotaledger.net)
 
-> 🚀 **Deployed Contract Address:** `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`
-> 🔗 **Network:** IOTA EVM Testnet | **Chain ID:** 1076
-> 📋 **Explorer:** [View on IOTA EVM Explorer](https://explorer.evm.testnet.iotaledger.net/address/0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0)
+> 🚀 **Deployed Contract Address:** `0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A`
+> 🔗 **Network:** Ethereum Sepolia Testnet | **Chain ID:** 11155111
+> 📋 **Explorer:** [View on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A)
 
 A **blockchain-based Digital Product Passport (DPP)** system built on the IOTA EVM, designed for investment casting foundries supplying safety-critical aerospace components (e.g., turbine blades). Each physical part or piece of equipment is represented as an ERC-721 NFT, carrying a complete, tamper-proof lifecycle record from manufacture through end-of-life.
 
