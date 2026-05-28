@@ -8,29 +8,29 @@ contract ManufacturingDPPTest is Test {
     ManufacturingDPP public dpp;
 
     // Test accounts
-    address admin    = address(0xA1);
-    address foundry  = address(0xA2);
+    address admin = address(0xA1);
+    address foundry = address(0xA2);
     address machining = address(0xA3);
-    address oem      = address(0xA4);
-    address mro      = address(0xA5);
+    address oem = address(0xA4);
+    address mro = address(0xA5);
     address stranger = address(0xA6);
 
     bytes32 constant NOTARIZATION = bytes32(uint256(0xDEAD));
-    string  constant URI_V1 = "ipfs://QmV1";
-    string  constant URI_V2 = "ipfs://QmV2";
+    string constant URI_V1 = "ipfs://QmV1";
+    string constant URI_V2 = "ipfs://QmV2";
 
     uint256 constant EQUIPMENT_ID = 1;
-    uint256 constant PART_ID      = 2;
+    uint256 constant PART_ID = 2;
 
     function setUp() public {
         vm.startPrank(admin);
         dpp = new ManufacturingDPP();
 
         // Grant roles
-        dpp.grantRole(dpp.FOUNDRY_ROLE(),   foundry);
+        dpp.grantRole(dpp.FOUNDRY_ROLE(), foundry);
         dpp.grantRole(dpp.MACHINING_ROLE(), machining);
-        dpp.grantRole(dpp.OEM_ROLE(),       oem);
-        dpp.grantRole(dpp.MRO_ROLE(),       mro);
+        dpp.grantRole(dpp.OEM_ROLE(), oem);
+        dpp.grantRole(dpp.MRO_ROLE(), mro);
 
         // Mint equipment & part
         dpp.mintEquipment(foundry, EQUIPMENT_ID, URI_V1);
@@ -49,8 +49,7 @@ contract ManufacturingDPPTest is Test {
 
     function test_MintEquipment_InitialStageIsManufacturing() public view {
         assertEq(
-            uint8(dpp.currentStage(EQUIPMENT_ID)),
-            uint8(ManufacturingDPP.LifecycleStage.ManufacturingAndInspection)
+            uint8(dpp.currentStage(EQUIPMENT_ID)), uint8(ManufacturingDPP.LifecycleStage.ManufacturingAndInspection)
         );
     }
 
@@ -110,19 +109,10 @@ contract ManufacturingDPPTest is Test {
         vm.prank(foundry);
         vm.expectEmit(true, false, false, true);
         emit ManufacturingDPP.LifecycleStageUpdated(
-            EQUIPMENT_ID,
-            ManufacturingDPP.LifecycleStage.AssemblyAndIntegration,
-            NOTARIZATION
+            EQUIPMENT_ID, ManufacturingDPP.LifecycleStage.AssemblyAndIntegration, NOTARIZATION
         );
-        dpp.updateLifecycleStage(
-            EQUIPMENT_ID,
-            ManufacturingDPP.LifecycleStage.AssemblyAndIntegration,
-            NOTARIZATION
-        );
-        assertEq(
-            uint8(dpp.currentStage(EQUIPMENT_ID)),
-            uint8(ManufacturingDPP.LifecycleStage.AssemblyAndIntegration)
-        );
+        dpp.updateLifecycleStage(EQUIPMENT_ID, ManufacturingDPP.LifecycleStage.AssemblyAndIntegration, NOTARIZATION);
+        assertEq(uint8(dpp.currentStage(EQUIPMENT_ID)), uint8(ManufacturingDPP.LifecycleStage.AssemblyAndIntegration));
     }
 
     function test_LifecycleStage_OemAdvancesToOperation() public {
@@ -138,11 +128,7 @@ contract ManufacturingDPPTest is Test {
     function test_LifecycleStage_RevertSameStage() public {
         vm.prank(foundry);
         vm.expectRevert("Already at this stage");
-        dpp.updateLifecycleStage(
-            EQUIPMENT_ID,
-            ManufacturingDPP.LifecycleStage.ManufacturingAndInspection,
-            NOTARIZATION
-        );
+        dpp.updateLifecycleStage(EQUIPMENT_ID, ManufacturingDPP.LifecycleStage.ManufacturingAndInspection, NOTARIZATION);
     }
 
     function test_LifecycleStage_RevertUnauthorizedRole() public {
@@ -247,7 +233,9 @@ contract ManufacturingDPPTest is Test {
     function test_RecordProcessStep_FoundryRole() public {
         vm.prank(foundry);
         vm.expectEmit(true, false, false, true);
-        emit ManufacturingDPP.ProcessStepRecorded(EQUIPMENT_ID, "Wax Pattern Creation", "Tolerance: +/-0.05mm", NOTARIZATION);
+        emit ManufacturingDPP.ProcessStepRecorded(
+            EQUIPMENT_ID, "Wax Pattern Creation", "Tolerance: +/-0.05mm", NOTARIZATION
+        );
         dpp.recordProcessStep(EQUIPMENT_ID, "Wax Pattern Creation", "Tolerance: +/-0.05mm", NOTARIZATION);
     }
 
@@ -278,12 +266,12 @@ contract ManufacturingDPPTest is Test {
     }
 
     function test_GetRoles_AdminHasAdminRole() public view {
-        (, , , , bool isAdmin) = dpp.getRoles(admin);
+        (,,,, bool isAdmin) = dpp.getRoles(admin);
         assertTrue(isAdmin);
     }
 
     function test_GetRoles_FoundryHasFoundryRole() public view {
-        (bool isFoundry, , , , ) = dpp.getRoles(foundry);
+        (bool isFoundry,,,,) = dpp.getRoles(foundry);
         assertTrue(isFoundry);
     }
 
@@ -320,8 +308,8 @@ contract ManufacturingDPPTest is Test {
         // 1. Foundry records process steps
         vm.startPrank(foundry);
         dpp.recordProcessStep(EQUIPMENT_ID, "Wax Pattern Creation", "Alloy: IN718, Tolerance: +-0.05mm", NOTARIZATION);
-        dpp.recordProcessStep(EQUIPMENT_ID, "Investment Casting",   "Temp: 1450C, Vacuum: 1e-4 torr",  NOTARIZATION);
-        dpp.addCertification(EQUIPMENT_ID, "NDT",   "ipfs://QmNDTCert",  NOTARIZATION);
+        dpp.recordProcessStep(EQUIPMENT_ID, "Investment Casting", "Temp: 1450C, Vacuum: 1e-4 torr", NOTARIZATION);
+        dpp.addCertification(EQUIPMENT_ID, "NDT", "ipfs://QmNDTCert", NOTARIZATION);
         dpp.addCertification(EQUIPMENT_ID, "X-Ray", "ipfs://QmXRayCert", NOTARIZATION);
 
         // 2. Advance to assembly
@@ -352,7 +340,7 @@ contract ManufacturingDPPTest is Test {
         dpp.updateLifecycleStage(EQUIPMENT_ID, ManufacturingDPP.LifecycleStage.EndOfLifeAndRecycling, NOTARIZATION);
 
         // Final state verification
-        (address finalOwner, ManufacturingDPP.LifecycleStage finalStage, , , ) = dpp.getTokenInfo(EQUIPMENT_ID);
+        (address finalOwner, ManufacturingDPP.LifecycleStage finalStage,,,) = dpp.getTokenInfo(EQUIPMENT_ID);
         assertEq(finalOwner, mro);
         assertEq(uint8(finalStage), uint8(ManufacturingDPP.LifecycleStage.EndOfLifeAndRecycling));
         console.log("Final owner:", finalOwner);

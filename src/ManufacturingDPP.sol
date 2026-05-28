@@ -17,7 +17,6 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  * - Immutable on-chain audit trails via events integrated with IOTA Notarization hashes[cite: 4].
  */
 contract ManufacturingDPP is ERC721, AccessControl {
-    
     /* =============================================
        ROLES & ACCESS CONTROL DEFINITIONS
     ============================================= */
@@ -62,10 +61,10 @@ contract ManufacturingDPP is ERC721, AccessControl {
     /// @notice Discrete lifecycle stages mapping to the overarching IIoT architecture diagram[cite: 12].
     enum LifecycleStage {
         ManufacturingAndInspection, // Foundry baseline creation
-        AssemblyAndIntegration,     // Machining and vendor integrations
-        OperationAndUsage,          // OEM deployment
-        MaintenanceAndService,      // MRO upkeep
-        EndOfLifeAndRecycling       // Decommissioning
+        AssemblyAndIntegration, // Machining and vendor integrations
+        OperationAndUsage, // OEM deployment
+        MaintenanceAndService, // MRO upkeep
+        EndOfLifeAndRecycling // Decommissioning
     }
 
     /// @notice Tracks the current real-world lifecycle stage of each tokenized part/equipment[cite: 12].
@@ -83,7 +82,9 @@ contract ManufacturingDPP is ERC721, AccessControl {
      * @param newOwner A human-readable name or company identifier for the new owner[cite: 13].
      * @param notarizationHash The associated IOTA Notarization object ID / transaction hash providing immutable off-chain verification[cite: 13].
      */
-    event OwnershipTransferred(uint256 indexed tokenId, address from, address to, string newOwner, bytes32 notarizationHash);
+    event OwnershipTransferred(
+        uint256 indexed tokenId, address from, address to, string newOwner, bytes32 notarizationHash
+    );
 
     /**
      * @notice Emitted to log maintenance, repair, or overhaul activities[cite: 15].
@@ -149,9 +150,8 @@ contract ManufacturingDPP is ERC721, AccessControl {
 
     function _onlyAuthorized() private view {
         require(
-            hasRole(FOUNDRY_ROLE, msg.sender) || hasRole(MACHINING_ROLE, msg.sender)
-                || hasRole(OEM_ROLE, msg.sender) || hasRole(MRO_ROLE, msg.sender)
-                || hasRole(ADMIN_ROLE, msg.sender),
+            hasRole(FOUNDRY_ROLE, msg.sender) || hasRole(MACHINING_ROLE, msg.sender) || hasRole(OEM_ROLE, msg.sender)
+                || hasRole(MRO_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender),
             "Unauthorized"
         );
     }
@@ -321,7 +321,10 @@ contract ManufacturingDPP is ERC721, AccessControl {
         bool isAdmin = hasRole(ADMIN_ROLE, msg.sender);
 
         if (current == LifecycleStage.ManufacturingAndInspection) {
-            require(isAdmin || hasRole(FOUNDRY_ROLE, msg.sender) || hasRole(MACHINING_ROLE, msg.sender), "Only FOUNDRY, MACHINING or ADMIN");
+            require(
+                isAdmin || hasRole(FOUNDRY_ROLE, msg.sender) || hasRole(MACHINING_ROLE, msg.sender),
+                "Only FOUNDRY, MACHINING or ADMIN"
+            );
         } else if (current == LifecycleStage.AssemblyAndIntegration) {
             require(isAdmin || hasRole(OEM_ROLE, msg.sender), "Only OEM or ADMIN");
         } else if (current == LifecycleStage.OperationAndUsage) {
