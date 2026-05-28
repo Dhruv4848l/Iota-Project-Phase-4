@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IOTA Manufacturing DPP — Digital Product Passport</title>
+  <meta name="description" content="Blockchain-based Digital Product Passport system for aerospace manufacturing on IOTA EVM." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #060912;
+      --surface: rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --border-glow: rgba(99,102,241,0.4);
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f1f5f9;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99,102,241,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(6,182,212,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* HEADER */
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(6,9,18,0.8);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px rgba(99,102,241,0.3);
+    }
+
+    .logo-text { line-height: 1.2; }
+    .logo-title { font-weight: 700; font-size: 15px; color: var(--text); }
+    .logo-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+
+    #connectBtn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border-glow);
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(6,182,212,0.1));
+      color: var(--primary-light);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    #connectBtn:hover { background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(6,182,212,0.2)); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.2); }
+    #connectBtn.connected { border-color: rgba(16,185,129,0.4); color: var(--success); background: rgba(16,185,129,0.1); }
+
+    /* HERO */
+    .hero {
+      padding: 60px 0 40px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border-glow);
+      background: rgba(99,102,241,0.1);
+      font-size: 12px;
+      color: var(--primary-light);
+      font-weight: 500;
+      margin-bottom: 24px;
+      animation: pulse-border 3s ease infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { border-color: rgba(99,102,241,0.4); }
+      50% { border-color: rgba(99,102,241,0.8); }
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 54px);
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #f1f5f9 0%, #818cf8 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      color: var(--text-dim);
+      font-size: 16px;
+      max-width: 600px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+    }
+
+    /* CONTRACT INFO BAR */
+    .info-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 48px;
+    }
+
+    .info-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .info-chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      animation: blink 2s ease infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* WALLET STATUS */
+    #walletStatus {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .status-item { display: flex; flex-direction: column; gap: 2px; }
+    .status-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-value { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+
+    .role-badge {
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: var(--primary-light);
+    }
+    .role-badge.admin { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); color: #fbbf24; }
+    .role-badge.foundry { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.3); color: #22d3ee; }
+    .role-badge.oem { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: #34d399; }
+    .role-badge.mro { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #f87171; }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 32px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .tab:hover { color: var(--text); background: var(--surface-hover); }
+    .tab.active {
+      background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(6,182,212,0.15));
+      color: var(--primary-light);
+      border: 1px solid var(--border-glow);
+    }
+
+    /* PANELS */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title .icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+
+    /* FORM */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-full { grid-column: 1 / -1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 12px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .form-input, .form-select {
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+
+    .form-select option { background: #1e293b; }
+    .form-input::placeholder { color: var(--text-muted); }
+
+    .form-hint { font-size: 11px; color: var(--text-muted); }
+
+    /* BUTTONS */
+    .btn {
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+    .btn-secondary:hover { border-color: var(--primary); color: var(--primary-light); }
+
+    .btn-accent {
+      background: linear-gradient(135deg, #0891b2, #0e7490);
+      color: white;
+      box-shadow: 0 4px 16px rgba(6,182,212,0.25);
+    }
+    .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(6,182,212,0.35); }
+
+    /* RESULT BOX */
+    .result-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid;
+      font-size: 13px;
+      line-height: 1.6;
+      font-family: 'JetBrains Mono', monospace;
+      display: none;
+      word-break: break-all;
+    }
+    .result-box.success { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3); color: #34d399; }
+    .result-box.error { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); color: #f87171; }
+    .result-box.info { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.3); color: #a5b4fc; }
+    .result-box.loading { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3); color: #fbbf24; }
+
+    /* TOKEN CARD */
+    .token-card {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(6,182,212,0.05));
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .token-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .token-id {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stage-badge {
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid;
+    }
+
+    .stage-0 { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #818cf8; }
+    .stage-1 { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.4); color: #22d3ee; }
+    .stage-2 { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: #34d399; }
+    .stage-3 { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: #fbbf24; }
+    .stage-4 { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #f87171; }
+
+    .token-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) { .token-grid { grid-template-columns: 1fr; } }
+
+    .token-field { display: flex; flex-direction: column; gap: 4px; }
+    .token-field-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .token-field-value { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); word-break: break-all; }
+
+    /* LIFECYCLE TIMELINE */
+    .lifecycle-track {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 24px 0;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+
+    .lifecycle-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 80px;
+      position: relative;
+    }
+
+    .lifecycle-step::after {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+      z-index: 0;
+    }
+
+    .lifecycle-step:last-child::after { display: none; }
+
+    .lifecycle-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s;
+    }
+
+    .lifecycle-dot.active { border-color: var(--primary); background: rgba(99,102,241,0.2); box-shadow: 0 0 12px rgba(99,102,241,0.4); }
+    .lifecycle-dot.done { border-color: var(--success); background: rgba(16,185,129,0.2); }
+    .lifecycle-label { font-size: 10px; color: var(--text-muted); text-align: center; line-height: 1.3; }
+
+    /* DIVIDER */
+    .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+    /* STATS GRID */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: all 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border-glow); transform: translateY(-2px); }
+
+    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--text); }
+    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+    /* TOAST */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      display: none;
+      z-index: 999;
+      max-width: 360px;
+      border: 1px solid;
+      backdrop-filter: blur(12px);
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    #toast.success { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: #34d399; }
+    #toast.error { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #f87171; }
+    #toast.info { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #a5b4fc; }
+
+    /* SPINNER */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* FOOTER */
+    footer {
+      margin-top: 80px;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    footer p { font-size: 12px; color: var(--text-muted); }
+    footer a { color: var(--primary-light); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🏭</div>
+      <div class="logo-text">
+        <div class="logo-title">IOTA Manufacturing DPP</div>
+        <div class="logo-sub">Digital Product Passport</div>
+      </div>
+    </div>
+    <button id="connectBtn" onclick="connectWallet()">🦊 Connect MetaMask</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<main class="container">
+  <div class="hero">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Live on Ethereum Sepolia Testnet
+    </div>
+    <h1>Blockchain Digital<br/>Product Passport</h1>
+    <p>Tamper-proof lifecycle tracking for aerospace components — from investment casting through end-of-life, anchored on-chain as ERC-721 NFTs.</p>
+
+    <div class="info-bar">
+      <div class="info-chip"><span class="dot"></span>Contract: 0x2BD811...D3A1A</div>
+      <div class="info-chip">⛓ Sepolia Testnet</div>
+      <div class="info-chip">🔑 ERC-721 + AccessControl</div>
+      <div class="info-chip">⚙️ Solidity 0.8.33</div>
+    </div>
+  </div>
+
+  <!-- WALLET STATUS -->
+  <div id="walletStatus" style="display:none;">
+    <div class="status-item">
+      <span class="status-label">Connected Wallet</span>
+      <span class="status-value" id="walletAddr">—</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Network</span>
+      <span class="status-value" id="networkName">—</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Your Roles</span>
+      <div id="userRoles" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-label">Token Name</div>
+      <div class="stat-value" id="statName">—</div>
+      <div class="stat-sub">ERC-721 NFT</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Symbol</div>
+      <div class="stat-value" id="statSymbol">—</div>
+      <div class="stat-sub">Token ticker</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Network</div>
+      <div class="stat-value">Sepolia</div>
+      <div class="stat-sub">Chain ID: 11155111</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Contract</div>
+      <div class="stat-value">Live ✅</div>
+      <div class="stat-sub" style="word-break:break-all;">0x2BD811...D3A1A</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tab-lookup" onclick="switchTab('lookup')">🔍 Lookup Token</button>
+    <button class="tab" id="tab-mint" onclick="switchTab('mint')">⚙️ Mint Equipment</button>
+    <button class="tab" id="tab-part" onclick="switchTab('part')">🔩 Mint Part</button>
+    <button class="tab" id="tab-stage" onclick="switchTab('stage')">📊 Update Stage</button>
+    <button class="tab" id="tab-cert" onclick="switchTab('cert')">📜 Add Certification</button>
+  </div>
+
+  <!-- PANEL: LOOKUP -->
+  <div class="panel active" id="panel-lookup">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon" style="background:rgba(99,102,241,0.15);">🔍</div>
+        Token Lookup
+      </div>
+      <div class="card-desc">Query any token on-chain by its ID. View owner, lifecycle stage, IPFS metadata URI, parent and child relationships.</div>
+
+      <!-- Lifecycle visual -->
+      <div class="lifecycle-track" id="lifecycleTrack">
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc0">🏭</div><div class="lifecycle-label">Manu&shy;facturing</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc1">🚢</div><div class="lifecycle-label">Supply Chain</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc2">✈️</div><div class="lifecycle-label">Operation</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc3">🔧</div><div class="lifecycle-label">Maintenance</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc4">♻️</div><div class="lifecycle-label">End of Life</div></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Token ID</label>
+          <input class="form-input" id="lookupId" type="number" placeholder="e.g. 1" min="0" />
+        </div>
+        <div class="form-group" style="justify-content:flex-end;">
+          <button class="btn btn-primary" onclick="lookupToken()">🔍 Lookup Token</button>
+        </div>
+      </div>
+
+      <div class="result-box" id="lookupResult"></div>
+
+      <div class="token-card" id="tokenCard">
+        <div class="token-header">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">TOKEN ID</div>
+            <div class="token-id" id="tcId">—</div>
+          </div>
+          <div class="stage-badge" id="tcStageBadge">—</div>
+        </div>
+        <div class="token-grid">
+          <div class="token-field"><div class="token-field-label">Owner</div><div class="token-field-value" id="tcOwner">—</div></div>
+          <div class="token-field"><div class="token-field-label">Parent Token</div><div class="token-field-value" id="tcParent">—</div></div>
+          <div class="token-field"><div class="token-field-label">Child Count</div><div class="token-field-value" id="tcChildren">—</div></div>
+          <div class="token-field"><div class="token-field-label">Type</div><div class="token-field-value" id="tcType">—</div></div>
+          <div class="token-field" style="grid-column:1/-1;"><div class="token-field-label">Metadata URI</div><div class="token-field-value" id="tcUri">—</div></div>
+        </div>
+        <div class="divider"></div>
+        <a id="tcEtherscan" href="#" target="_blank" class="btn btn-secondary" style="font-size:12px;">View on Etherscan ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: MINT EQUIPMENT -->
+  <div class="panel" id="panel-mint">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon" style="background:rgba(6,182,212,0.15);">⚙️</div>
+        Mint Equipment NFT
+      </div>
+      <div class="card-desc">Create a new equipment token representing a turbine, casting machine, or other top-level aerospace equipment. Requires FOUNDRY_ROLE or ADMIN_ROLE.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Recipient Address</label>
+          <input class="form-input" id="mintTo" placeholder="0x... (leave blank for your wallet)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Equipment ID (Token ID)</label>
+          <input class="form-input" id="mintEqId" type="number" placeholder="e.g. 1" min="1" />
+          <span class="form-hint">Must be unique — use a new number</span>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Metadata URI (IPFS)</label>
+          <input class="form-input" id="mintUri" placeholder="ipfs://Qm... or https://..." />
+          <span class="form-hint">IPFS link to the equipment's JSON metadata</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-accent" onclick="mintEquipment()">⚙️ Mint Equipment</button>
+      </div>
+      <div class="result-box" id="mintResult"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: MINT PART -->
+  <div class="panel" id="panel-part">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon" style="background:rgba(139,92,246,0.15);">🔩</div>
+        Mint Part NFT
+      </div>
+      <div class="card-desc">Create a part token (e.g. turbine blade, nozzle) linked to a parent equipment token. Parts inherit the equipment's lifecycle context.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Recipient Address</label>
+          <input class="form-input" id="partTo" placeholder="0x... (leave blank for your wallet)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Part ID (Token ID)</label>
+          <input class="form-input" id="partId" type="number" placeholder="e.g. 2" min="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Parent Equipment ID</label>
+          <input class="form-input" id="partParentId" type="number" placeholder="e.g. 1" min="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Metadata URI</label>
+          <input class="form-input" id="partUri" placeholder="ipfs://Qm..." />
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="mintPart()">🔩 Mint Part</button>
+      </div>
+      <div class="result-box" id="partResult"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: UPDATE STAGE -->
+  <div class="panel" id="panel-stage">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon" style="background:rgba(245,158,11,0.15);">📊</div>
+        Update Lifecycle Stage
+      </div>
+      <div class="card-desc">Advance a token to the next lifecycle stage. Each transition is permanently recorded on-chain with an IOTA Notarization hash.</div>
+
+      <div class="lifecycle-track" style="margin-bottom:24px;">
+        <div class="lifecycle-step"><div class="lifecycle-dot done">🏭</div><div class="lifecycle-label">Manufacturing</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot">🚢</div><div class="lifecycle-label">Supply Chain</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot">✈️</div><div class="lifecycle-label">Operation</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot">🔧</div><div class="lifecycle-label">Maintenance</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot">♻️</div><div class="lifecycle-label">End of Life</div></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Token ID</label>
+          <input class="form-input" id="stageTokenId" type="number" placeholder="e.g. 1" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Lifecycle Stage</label>
+          <select class="form-select" id="stageSelect">
+            <option value="0">🏭 Manufacturing</option>
+            <option value="1">🚢 Supply Chain</option>
+            <option value="2">✈️ Operation</option>
+            <option value="3">🔧 Maintenance</option>
+            <option value="4">♻️ End of Life</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">IOTA Notarization Hash (optional)</label>
+          <input class="form-input" id="stageHash" placeholder="0x0000... (auto-filled if empty)" />
+          <span class="form-hint">Leave blank to auto-generate a placeholder hash</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="updateStage()">📊 Update Stage</button>
+      </div>
+      <div class="result-box" id="stageResult"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: CERTIFICATION -->
+  <div class="panel" id="panel-cert">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon" style="background:rgba(16,185,129,0.15);">📜</div>
+        Add Certification
+      </div>
+      <div class="card-desc">Attach an aerospace certification (NDT, X-Ray, Heat Treatment, etc.) to a token, linking to the IPFS document and IOTA Notarization hash.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Token ID</label>
+          <input class="form-input" id="certTokenId" type="number" placeholder="e.g. 1" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certification Type</label>
+          <select class="form-select" id="certType">
+            <option value="NDT">NDT — Non-Destructive Testing</option>
+            <option value="X-Ray">X-Ray Inspection</option>
+            <option value="HeatTreatment">Heat Treatment</option>
+            <option value="DimensionalCheck">Dimensional Check</option>
+            <option value="MaterialTest">Material Test</option>
+            <option value="AS9100">AS9100 Compliance</option>
+            <option value="FAA">FAA Approval</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Document Hash (IPFS)</label>
+          <input class="form-input" id="certDocHash" placeholder="ipfs://Qm..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notarization Hash</label>
+          <input class="form-input" id="certNotHash" placeholder="0x000... (auto if blank)" />
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="addCertification()">📜 Add Certification</button>
+      </div>
+      <div class="result-box" id="certResult"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <p>
+      IOTA Manufacturing DPP •
+      <a href="https://sepolia.etherscan.io/address/0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A" target="_blank">Contract on Etherscan</a> •
+      <a href="https://github.com/Dhruv4848l/Iota-Project-Phase-4" target="_blank">GitHub Repository</a>
+    </p>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  // ─── CONFIG ───────────────────────────────────────────────────────────
+  const CONTRACT_ADDRESS = "0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A";
+  const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111
+
+  const STAGES = ["Manufacturing","Supply Chain","Operation","Maintenance","End of Life"];
+  const STAGE_EMOJIS = ["🏭","🚢","✈️","🔧","♻️"];
+
+  const ABI = [
+    "function name() view returns (string)",
+    "function symbol() view returns (string)",
+    "function mintEquipment(address to, uint256 equipmentId, string initialURI)",
+    "function mintPart(address to, uint256 partId, uint256 equipmentId, string initialURI)",
+    "function getTokenInfo(uint256 tokenId) view returns (address owner, uint8 stage, string uri, uint256 parent, uint256 childCount)",
+    "function updateLifecycleStage(uint256 tokenId, uint8 newStage, bytes32 notarizationHash)",
+    "function addCertification(uint256 tokenId, string certType, string documentHash, bytes32 notarizationHash)",
+    "function recordMaintenance(uint256 tokenId, string details, bytes32 notarizationHash)",
+    "function getRoles(address account) view returns (bool foundry, bool machining, bool oem, bool mro, bool admin)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function exists(uint256 tokenId) view returns (bool)",
+    "function getChildCount(uint256 equipmentId) view returns (uint256)",
+    "function parentOf(uint256) view returns (uint256)"
+  ];
+
+  // ─── STATE ────────────────────────────────────────────────────────────
+  let provider, signer, contract, userAddress;
+
+  // ─── INIT ─────────────────────────────────────────────────────────────
+  window.addEventListener('load', async () => {
+    // Load read-only data from public RPC
+    try {
+      const pub = new ethers.JsonRpcProvider("https://sepolia.drpc.org");
+      const rc = new ethers.Contract(CONTRACT_ADDRESS, ABI, pub);
+      const [name, symbol] = await Promise.all([rc.name(), rc.symbol()]);
+      document.getElementById('statName').textContent = name;
+      document.getElementById('statSymbol').textContent = symbol;
+    } catch(e) { console.warn('Could not load contract data:', e); }
+  });
+
+  // ─── WALLET ───────────────────────────────────────────────────────────
+  async function connectWallet() {
+    if (!window.ethereum) return showToast("MetaMask not found. Please install it.", "error");
+    try {
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      if (chainId !== SEPOLIA_CHAIN_ID) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: SEPOLIA_CHAIN_ID }]
+          });
+        } catch(e) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{ chainId: SEPOLIA_CHAIN_ID, chainName: 'Ethereum Sepolia', rpcUrls: ['https://sepolia.drpc.org'], nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://sepolia.etherscan.io'] }]
+          });
+        }
+      }
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      userAddress = await signer.getAddress();
+      contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+      // Update UI
+      const btn = document.getElementById('connectBtn');
+      btn.textContent = `✅ ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+      btn.classList.add('connected');
+
+      document.getElementById('walletAddr').textContent = userAddress;
+      document.getElementById('networkName').textContent = 'Ethereum Sepolia';
+      document.getElementById('walletStatus').style.display = 'flex';
+
+      // Load roles
+      const roles = await contract.getRoles(userAddress);
+      const rolesEl = document.getElementById('userRoles');
+      rolesEl.innerHTML = '';
+      if (roles.admin)    rolesEl.innerHTML += '<span class="role-badge admin">ADMIN</span>';
+      if (roles.foundry)  rolesEl.innerHTML += '<span class="role-badge foundry">FOUNDRY</span>';
+      if (roles.oem)      rolesEl.innerHTML += '<span class="role-badge oem">OEM</span>';
+      if (roles.mro)      rolesEl.innerHTML += '<span class="role-badge mro">MRO</span>';
+      if (!roles.admin && !roles.foundry && !roles.oem && !roles.mro) {
+        rolesEl.innerHTML = '<span class="role-badge" style="color:var(--text-muted);">No roles assigned</span>';
+      }
+
+      showToast(`Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`, "success");
+    } catch(e) {
+      showToast(e.message || "Connection failed", "error");
+    }
+  }
+
+  // ─── TABS ─────────────────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    document.getElementById(`panel-${name}`).classList.add('active');
+  }
+
+  // ─── LOOKUP TOKEN ─────────────────────────────────────────────────────
+  async function lookupToken() {
+    const id = document.getElementById('lookupId').value.trim();
+    if (!id) return showResult('lookupResult', 'Please enter a token ID', 'error');
+
+    showResult('lookupResult', '⏳ Loading token data...', 'loading');
+    document.getElementById('tokenCard').style.display = 'none';
+
+    try {
+      const pub = new ethers.JsonRpcProvider("https://sepolia.drpc.org");
+      const rc = new ethers.Contract(CONTRACT_ADDRESS, ABI, pub);
+      const exists = await rc.exists(BigInt(id));
+      if (!exists) return showResult('lookupResult', `❌ Token #${id} does not exist`, 'error');
+
+      const info = await rc.getTokenInfo(BigInt(id));
+      const [owner, stage, uri, parent, childCount] = [info[0], Number(info[1]), info[2], Number(info[3]), Number(info[4])];
+
+      // Update lifecycle track
+      for (let i = 0; i <= 4; i++) {
+        const dot = document.getElementById(`lc${i}`);
+        dot.classList.remove('active', 'done');
+        if (i < stage) dot.classList.add('done');
+        if (i === stage) dot.classList.add('active');
+      }
+
+      // Update token card
+      document.getElementById('tcId').textContent = `#${id}`;
+      document.getElementById('tcOwner').textContent = owner;
+      document.getElementById('tcParent').textContent = parent === 0 ? 'None (root equipment)' : `#${parent}`;
+      document.getElementById('tcChildren').textContent = childCount;
+      document.getElementById('tcType').textContent = parent === 0 ? '⚙️ Equipment' : '🔩 Part';
+      document.getElementById('tcUri').textContent = uri || 'No URI set';
+
+      const stageNames = STAGE_EMOJIS[stage] + ' ' + STAGES[stage];
+      const stageBadge = document.getElementById('tcStageBadge');
+      stageBadge.textContent = stageNames;
+      stageBadge.className = `stage-badge stage-${stage}`;
+
+      document.getElementById('tcEtherscan').href = `https://sepolia.etherscan.io/token/${CONTRACT_ADDRESS}?a=${id}`;
+      document.getElementById('tokenCard').style.display = 'block';
+      showResult('lookupResult', `✅ Token #${id} found — Stage: ${STAGES[stage]}`, 'success');
+    } catch(e) {
+      showResult('lookupResult', `Error: ${e.message}`, 'error');
+    }
+  }
+
+  // ─── MINT EQUIPMENT ───────────────────────────────────────────────────
+  async function mintEquipment() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const to = document.getElementById('mintTo').value.trim() || userAddress;
+    const eqId = document.getElementById('mintEqId').value.trim();
+    const uri = document.getElementById('mintUri').value.trim() || 'ipfs://placeholder';
+    if (!eqId) return showResult('mintResult', 'Please enter an Equipment ID', 'error');
+
+    showResult('mintResult', '⏳ Sending transaction...', 'loading');
+    try {
+      const tx = await contract.mintEquipment(to, BigInt(eqId), uri);
+      showResult('mintResult', `⏳ Tx sent: ${tx.hash}\nWaiting for confirmation...`, 'loading');
+      const receipt = await tx.wait();
+      showResult('mintResult', `✅ Equipment #${eqId} minted!\nTx: ${receipt.hash}\nBlock: ${receipt.blockNumber}`, 'success');
+      showToast(`Equipment #${eqId} minted successfully!`, 'success');
+    } catch(e) {
+      showResult('mintResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  // ─── MINT PART ────────────────────────────────────────────────────────
+  async function mintPart() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const to = document.getElementById('partTo').value.trim() || userAddress;
+    const partId = document.getElementById('partId').value.trim();
+    const parentId = document.getElementById('partParentId').value.trim();
+    const uri = document.getElementById('partUri').value.trim() || 'ipfs://placeholder';
+    if (!partId || !parentId) return showResult('partResult', 'Please fill in Part ID and Parent Equipment ID', 'error');
+
+    showResult('partResult', '⏳ Sending transaction...', 'loading');
+    try {
+      const tx = await contract.mintPart(to, BigInt(partId), BigInt(parentId), uri);
+      showResult('partResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
+      const receipt = await tx.wait();
+      showResult('partResult', `✅ Part #${partId} minted (child of Equipment #${parentId})!\nTx: ${receipt.hash}`, 'success');
+      showToast(`Part #${partId} minted!`, 'success');
+    } catch(e) {
+      showResult('partResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  // ─── UPDATE STAGE ─────────────────────────────────────────────────────
+  async function updateStage() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const tokenId = document.getElementById('stageTokenId').value.trim();
+    const stage = document.getElementById('stageSelect').value;
+    const hashInput = document.getElementById('stageHash').value.trim();
+    const hash = hashInput || ethers.keccak256(ethers.toUtf8Bytes(`stage-${Date.now()}`));
+    if (!tokenId) return showResult('stageResult', 'Please enter a Token ID', 'error');
+
+    showResult('stageResult', '⏳ Sending transaction...', 'loading');
+    try {
+      const tx = await contract.updateLifecycleStage(BigInt(tokenId), Number(stage), hash);
+      showResult('stageResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
+      const receipt = await tx.wait();
+      showResult('stageResult', `✅ Token #${tokenId} advanced to "${STAGES[stage]}"!\nTx: ${receipt.hash}`, 'success');
+      showToast(`Stage updated to ${STAGES[stage]}!`, 'success');
+    } catch(e) {
+      showResult('stageResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  // ─── ADD CERT ─────────────────────────────────────────────────────────
+  async function addCertification() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const tokenId = document.getElementById('certTokenId').value.trim();
+    const certType = document.getElementById('certType').value;
+    const docHash = document.getElementById('certDocHash').value.trim() || 'ipfs://cert-placeholder';
+    const notHash = document.getElementById('certNotHash').value.trim() || ethers.keccak256(ethers.toUtf8Bytes(`cert-${Date.now()}`));
+    if (!tokenId) return showResult('certResult', 'Please enter a Token ID', 'error');
+
+    showResult('certResult', '⏳ Sending transaction...', 'loading');
+    try {
+      const tx = await contract.addCertification(BigInt(tokenId), certType, docHash, notHash);
+      showResult('certResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
+      const receipt = await tx.wait();
+      showResult('certResult', `✅ "${certType}" certification added to Token #${tokenId}!\nTx: ${receipt.hash}`, 'success');
+      showToast(`${certType} certification added!`, 'success');
+    } catch(e) {
+      showResult('certResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  // ─── HELPERS ──────────────────────────────────────────────────────────
+  function showResult(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `result-box ${type}`;
+    el.style.display = 'block';
+  }
+
+  function showToast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = type;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 4000);
+  }
+</script>
+</body>
+</html>
