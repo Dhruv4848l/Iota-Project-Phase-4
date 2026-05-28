@@ -4,11 +4,13 @@
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.33-informational?logo=solidity)](https://soliditylang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Built with Foundry](https://img.shields.io/badge/Built%20with-Foundry-orange)](https://book.getfoundry.sh/)
-[![Deployed](https://img.shields.io/badge/Contract-Deployed-brightgreen)](https://explorer.evm.testnet.iotaledger.net)
+[![Deployed](https://img.shields.io/badge/Contract-Deployed-brightgreen)](https://sepolia.etherscan.io/address/0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A)
+[![Frontend](https://img.shields.io/badge/Frontend-Live-blueviolet)](https://iota-dpp.vercel.app)
 
 > 🚀 **Deployed Contract Address:** `0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A`
 > 🔗 **Network:** Ethereum Sepolia Testnet | **Chain ID:** 11155111
 > 📋 **Explorer:** [View on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A)
+> 🌐 **Live Frontend:** [iota-dpp.vercel.app](https://iota-dpp.vercel.app)
 
 A **blockchain-based Digital Product Passport (DPP)** system built on the IOTA EVM, designed for investment casting foundries supplying safety-critical aerospace components (e.g., turbine blades). Each physical part or piece of equipment is represented as an ERC-721 NFT, carrying a complete, tamper-proof lifecycle record from manufacture through end-of-life.
 
