@@ -581,10 +581,11 @@
     <p>Tamper-proof lifecycle tracking for aerospace components — from investment casting through end-of-life, anchored on-chain as ERC-721 NFTs.</p>
 
     <div class="info-bar">
-      <div class="info-chip"><span class="dot"></span>Contract: 0x2BD811...D3A1A</div>
+      <div class="info-chip"><span class="dot"></span>Contract: 0xc6e9D3...A5f8</div>
       <div class="info-chip">⛓ Sepolia Testnet</div>
       <div class="info-chip">🔑 ERC-721 + AccessControl</div>
       <div class="info-chip">⚙️ Solidity 0.8.33</div>
+      <div class="info-chip">🌿 Carbon NFT v2</div>
     </div>
   </div>
 
@@ -638,6 +639,7 @@
     <button class="tab" id="tab-part" onclick="switchTab('part')">🔩 Mint Part</button>
     <button class="tab" id="tab-stage" onclick="switchTab('stage')">📊 Update Stage</button>
     <button class="tab" id="tab-cert" onclick="switchTab('cert')">📜 Add Certification</button>
+    <button class="tab" id="tab-carbon" onclick="switchTab('carbon')" style="color:#34d399;border-color:rgba(16,185,129,0.3);">🌿 Carbon NFT</button>
   </div>
 
   <!-- PANEL: LOOKUP -->
@@ -841,6 +843,68 @@
     </div>
   </div>
 
+  <!-- PANEL: CARBON NFT -->
+  <div class="panel" id="panel-carbon">
+    <div class="card" style="border-color:rgba(16,185,129,0.2);">
+      <div class="card-title">
+        <div class="icon" style="background:rgba(16,185,129,0.15);">🌿</div>
+        Mint Carbon NFT
+        <span style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:100px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#34d399;font-weight:600;">v2 NEW</span>
+      </div>
+      <div class="card-desc">Record the energy consumption and CO₂ footprint of a manufacturing batch as an immutable on-chain Carbon NFT. Requires <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;">CARBON_REPORTER_ROLE</code> or ADMIN.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Carbon Token ID</label>
+          <input class="form-input" id="carbonTokenId" type="number" placeholder="e.g. 100" min="1" />
+          <span class="form-hint">Must be unique — different from equipment/part IDs</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Linked Equipment ID</label>
+          <input class="form-input" id="carbonLinkedId" type="number" placeholder="e.g. 1 (0 for standalone)" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Energy Consumed (Wh)</label>
+          <input class="form-input" id="carbonEnergy" type="number" placeholder="e.g. 120000 = 120 kWh" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">CO₂ Emitted (grams)</label>
+          <input class="form-input" id="carbonCO2" type="number" placeholder="e.g. 32000 = 32 kg" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sustainability Score (0–100)</label>
+          <input class="form-input" id="carbonScore" type="number" placeholder="e.g. 72" min="0" max="100" />
+          <span class="form-hint">100 = fully green ♻️</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reporting Period</label>
+          <input class="form-input" id="carbonPeriod" placeholder="e.g. Batch-B101 or 2024-Q1" />
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Metadata URI (IPFS)</label>
+          <input class="form-input" id="carbonUri" placeholder="ipfs://Qm... or leave blank" />
+        </div>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn" style="background:linear-gradient(135deg,#059669,#047857);color:white;box-shadow:0 4px 16px rgba(16,185,129,0.3);" onclick="mintCarbonNFT()">🌿 Mint Carbon NFT</button>
+        <button class="btn btn-secondary" onclick="lookupCarbonNFT()">🔍 Lookup Carbon Data</button>
+      </div>
+      <div class="result-box" id="carbonResult"></div>
+
+      <!-- Carbon data card -->
+      <div id="carbonDataCard" style="display:none;margin-top:16px;background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(6,182,212,0.05));border:1px solid rgba(16,185,129,0.3);border-radius:16px;padding:24px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">CARBON NFT DATA</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="token-field"><div class="token-field-label">⚡ Energy</div><div class="token-field-value" id="cdEnergy">—</div></div>
+          <div class="token-field"><div class="token-field-label">💨 CO₂ Emitted</div><div class="token-field-value" id="cdCO2">—</div></div>
+          <div class="token-field"><div class="token-field-label">🌿 Sustainability</div><div class="token-field-value" id="cdScore">—</div></div>
+          <div class="token-field"><div class="token-field-label">📅 Period</div><div class="token-field-value" id="cdPeriod">—</div></div>
+          <div class="token-field"><div class="token-field-label">🔗 Linked Equipment</div><div class="token-field-value" id="cdLinked">—</div></div>
+          <div class="token-field"><div class="token-field-label">🕐 Last Updated</div><div class="token-field-value" id="cdUpdated">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- FOOTER -->
@@ -859,7 +923,7 @@
 
 <script>
   // ─── CONFIG ───────────────────────────────────────────────────────────
-  const CONTRACT_ADDRESS = "0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A";
+  const CONTRACT_ADDRESS = "0xc6e9D390Ba802079eb1e7d4399F4d38daF97A5f8"; // v2 — with Carbon NFT
   const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111
 
   const STAGES = ["Manufacturing","Supply Chain","Operation","Maintenance","End of Life"];
@@ -870,15 +934,19 @@
     "function symbol() view returns (string)",
     "function mintEquipment(address to, uint256 equipmentId, string initialURI)",
     "function mintPart(address to, uint256 partId, uint256 equipmentId, string initialURI)",
+    "function mintCarbonNFT(address to, uint256 tokenId, uint256 linkedEquipmentId, uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, string reportingPeriod, string initialURI)",
+    "function updateCarbonData(uint256 tokenId, uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, bytes32 notarizationHash)",
+    "function getCarbonData(uint256 tokenId) view returns (uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, string reportingPeriod, uint256 linkedEquipmentId, uint256 lastUpdated)",
     "function getTokenInfo(uint256 tokenId) view returns (address owner, uint8 stage, string uri, uint256 parent, uint256 childCount)",
     "function updateLifecycleStage(uint256 tokenId, uint8 newStage, bytes32 notarizationHash)",
     "function addCertification(uint256 tokenId, string certType, string documentHash, bytes32 notarizationHash)",
     "function recordMaintenance(uint256 tokenId, string details, bytes32 notarizationHash)",
-    "function getRoles(address account) view returns (bool foundry, bool machining, bool oem, bool mro, bool admin)",
+    "function getRoles(address account) view returns (bool foundry, bool machining, bool oem, bool mro, bool admin, bool carbonReporter)",
     "function hasRole(bytes32 role, address account) view returns (bool)",
     "function exists(uint256 tokenId) view returns (bool)",
     "function getChildCount(uint256 equipmentId) view returns (uint256)",
-    "function parentOf(uint256) view returns (uint256)"
+    "function parentOf(uint256) view returns (uint256)",
+    "function tokenType(uint256) view returns (uint8)"
   ];
 
   // ─── STATE ────────────────────────────────────────────────────────────
@@ -966,12 +1034,13 @@
       // Load roles
       const roles = await contract.getRoles(userAddress);
       const rolesEl = document.getElementById('userRoles');
-      const hasAnyRole = roles.admin || roles.foundry || roles.oem || roles.mro || roles.machining;
+      const hasAnyRole = roles.admin || roles.foundry || roles.oem || roles.mro || roles.machining || roles.carbonReporter;
       rolesEl.innerHTML = '';
-      if (roles.admin)    rolesEl.innerHTML += '<span class="role-badge admin">ADMIN</span>';
-      if (roles.foundry)  rolesEl.innerHTML += '<span class="role-badge foundry">FOUNDRY</span>';
-      if (roles.oem)      rolesEl.innerHTML += '<span class="role-badge oem">OEM</span>';
-      if (roles.mro)      rolesEl.innerHTML += '<span class="role-badge mro">MRO</span>';
+      if (roles.admin)          rolesEl.innerHTML += '<span class="role-badge admin">ADMIN</span>';
+      if (roles.foundry)        rolesEl.innerHTML += '<span class="role-badge foundry">FOUNDRY</span>';
+      if (roles.oem)            rolesEl.innerHTML += '<span class="role-badge oem">OEM</span>';
+      if (roles.mro)            rolesEl.innerHTML += '<span class="role-badge mro">MRO</span>';
+      if (roles.carbonReporter) rolesEl.innerHTML += '<span class="role-badge" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:#34d399;">CARBON_REPORTER</span>';
       if (!hasAnyRole) {
         rolesEl.innerHTML = '<span class="role-badge" style="color:var(--text-muted);">No roles assigned</span>';
         document.getElementById('noRoleWarning').style.display = 'block';
@@ -1119,6 +1188,59 @@
       showToast(`${certType} certification added!`, 'success');
     } catch(e) {
       showResult('certResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  // ─── CARBON NFT ───────────────────────────────────────────────────────────
+  async function mintCarbonNFT() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const tokenId  = document.getElementById('carbonTokenId').value.trim();
+    const linkedId = document.getElementById('carbonLinkedId').value.trim() || '0';
+    const energy   = document.getElementById('carbonEnergy').value.trim();
+    const co2      = document.getElementById('carbonCO2').value.trim();
+    const score    = document.getElementById('carbonScore').value.trim();
+    const period   = document.getElementById('carbonPeriod').value.trim() || 'Batch-001';
+    const uri      = document.getElementById('carbonUri').value.trim() || 'ipfs://carbon-placeholder';
+    if (!tokenId || !energy || !co2 || !score) return showResult('carbonResult','Fill in Token ID, Energy, CO₂ and Score','error');
+    if (Number(score) > 100) return showResult('carbonResult','Score must be 0–100','error');
+
+    showResult('carbonResult','⏳ Sending transaction...','loading');
+    try {
+      const tx = await contract.mintCarbonNFT(
+        userAddress, BigInt(tokenId), BigInt(linkedId),
+        BigInt(energy), BigInt(co2), Number(score), period, uri
+      );
+      showResult('carbonResult',`⏳ Tx sent: ${tx.hash}`,'loading');
+      const receipt = await tx.wait();
+      showResult('carbonResult',`✅ Carbon NFT #${tokenId} minted!\nEnergy: ${(Number(energy)/1000).toFixed(1)} kWh | CO₂: ${(Number(co2)/1000).toFixed(1)} kg | Score: ${score}/100\nTx: ${receipt.hash}`,'success');
+      showToast(`Carbon NFT #${tokenId} minted! 🌿`,'success');
+    } catch(e) {
+      showResult('carbonResult',`Error: ${e.reason || e.message}`,'error');
+    }
+  }
+
+  async function lookupCarbonNFT() {
+    const tokenId = document.getElementById('carbonTokenId').value.trim();
+    if (!tokenId) return showResult('carbonResult','Enter a Token ID','error');
+    showResult('carbonResult','⏳ Reading carbon data...','loading');
+    document.getElementById('carbonDataCard').style.display = 'none';
+    try {
+      const pub = new ethers.JsonRpcProvider("https://sepolia.drpc.org");
+      const rc  = new ethers.Contract(CONTRACT_ADDRESS, ABI, pub);
+      const tType = await rc.tokenType(BigInt(tokenId));
+      if (Number(tType) !== 2) return showResult('carbonResult',`Token #${tokenId} is not a Carbon NFT (type=${tType})`,'error');
+      const data = await rc.getCarbonData(BigInt(tokenId));
+      const [energyWh, co2Grams, score, period, linked, lastUpdated] = data;
+      document.getElementById('cdEnergy').textContent  = `${(Number(energyWh)/1000).toFixed(1)} kWh (${Number(energyWh).toLocaleString()} Wh)`;
+      document.getElementById('cdCO2').textContent     = `${(Number(co2Grams)/1000).toFixed(1)} kg (${Number(co2Grams).toLocaleString()} g)`;
+      document.getElementById('cdScore').textContent   = `${score}/100 ${'🟢'.repeat(Math.round(score/20))}`;
+      document.getElementById('cdPeriod').textContent  = period;
+      document.getElementById('cdLinked').textContent  = Number(linked) === 0 ? 'Standalone' : `Equipment #${linked}`;
+      document.getElementById('cdUpdated').textContent = new Date(Number(lastUpdated)*1000).toLocaleString();
+      document.getElementById('carbonDataCard').style.display = 'block';
+      showResult('carbonResult',`✅ Carbon NFT #${tokenId} data loaded`,'success');
+    } catch(e) {
+      showResult('carbonResult',`Error: ${e.reason || e.message}`,'error');
     }
   }
 

@@ -4,6 +4,7 @@ pragma solidity 0.8.33;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
+
 /**
  * @title ManufacturingDPP
  * @author IOTA DPP Development Team
@@ -35,6 +36,51 @@ contract ManufacturingDPP is ERC721, AccessControl {
 
     /// @notice Super-admin role (typically the foundry owner or consortium admin) capable of assigning roles and overriding stage controls[cite: 8].
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /// @notice Role granted to sustainability officers or IoT energy monitoring systems to record carbon footprint data.
+    bytes32 public constant CARBON_REPORTER_ROLE = keccak256("CARBON_REPORTER_ROLE");
+
+    /* =============================================
+       TOKEN TYPE CLASSIFICATION
+    ============================================= */
+
+    /**
+     * @notice Classifies every minted token into one of three distinct passport types.
+     * @dev Equipment and Part tokens track physical components; Carbon tokens track environmental impact.
+     */
+    enum TokenType {
+        Equipment,  // Top-level aerospace equipment or batch record
+        Part,       // Sub-component linked to a parent equipment token
+        Carbon      // Carbon footprint & sustainability passport
+    }
+
+    /// @notice Stores the type classification for every minted token.
+    mapping(uint256 => TokenType) public tokenType;
+
+    /* =============================================
+       CARBON NFT DATA STORAGE
+    ============================================= */
+
+    /**
+     * @notice On-chain carbon footprint record attached to a Carbon NFT.
+     * @param energyWh       Total energy consumed in Watt-hours (divide by 1000 for kWh).
+     * @param co2Grams       Total CO2 equivalent emitted in grams (divide by 1000 for kg).
+     * @param sustainabilityScore Sustainability index 0-100 (100 = fully green).
+     * @param reportingPeriod Human-readable period string e.g. "2024-Q1" or "Batch-B101".
+     * @param linkedEquipmentId Token ID of the parent equipment this carbon record belongs to (0 if standalone).
+     * @param lastUpdated    Block timestamp of the most recent carbon data update.
+     */
+    struct CarbonData {
+        uint256 energyWh;
+        uint256 co2Grams;
+        uint8   sustainabilityScore;
+        string  reportingPeriod;
+        uint256 linkedEquipmentId;
+        uint256 lastUpdated;
+    }
+
+    /// @notice Maps a Carbon NFT token ID to its on-chain CarbonData record.
+    mapping(uint256 => CarbonData) public carbonRecords;
 
     /* =============================================
        HIERARCHY MAPPINGS
@@ -128,6 +174,40 @@ contract ManufacturingDPP is ERC721, AccessControl {
      */
     event MetadataUpdated(uint256 indexed tokenId, string newURI, bytes32 notarizationHash);
 
+    /**
+     * @notice Emitted when a new Carbon NFT is minted to record the environmental footprint of a manufacturing batch.
+     * @param tokenId             The newly minted Carbon NFT token ID.
+     * @param linkedEquipmentId   The parent equipment token this carbon record is linked to.
+     * @param energyWh            Energy consumed in Watt-hours.
+     * @param co2Grams            CO2 emitted in grams.
+     * @param sustainabilityScore Sustainability score 0-100.
+     * @param reportingPeriod     Human-readable period identifier.
+     */
+    event CarbonNFTMinted(
+        uint256 indexed tokenId,
+        uint256 indexed linkedEquipmentId,
+        uint256 energyWh,
+        uint256 co2Grams,
+        uint8   sustainabilityScore,
+        string  reportingPeriod
+    );
+
+    /**
+     * @notice Emitted when the carbon data of an existing Carbon NFT is updated.
+     * @param tokenId             The Carbon NFT being updated.
+     * @param energyWh            New total energy in Watt-hours.
+     * @param co2Grams            New CO2 total in grams.
+     * @param sustainabilityScore New sustainability score.
+     * @param notarizationHash    IOTA Notarization hash verifying the updated reading.
+     */
+    event CarbonDataUpdated(
+        uint256 indexed tokenId,
+        uint256 energyWh,
+        uint256 co2Grams,
+        uint8   sustainabilityScore,
+        bytes32 notarizationHash
+    );
+
     /* =============================================
        MODIFIERS
     ============================================= */
@@ -173,6 +253,7 @@ contract ManufacturingDPP is ERC721, AccessControl {
         _setRoleAdmin(MACHINING_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OEM_ROLE, ADMIN_ROLE);
         _setRoleAdmin(MRO_ROLE, ADMIN_ROLE);
+        _setRoleAdmin(CARBON_REPORTER_ROLE, ADMIN_ROLE);
     }
 
     /* =============================================
@@ -211,8 +292,90 @@ contract ManufacturingDPP is ERC721, AccessControl {
         require(exists(equipmentId), "Equipment must exist");
         _safeMint(to, partId);
         tokenUris[partId] = initialURI;
+        tokenType[partId] = TokenType.Part;
         parentOf[partId] = equipmentId;
         childrenOf[equipmentId].push(partId);
+    }
+
+    /**
+     * @notice Mints a Carbon NFT to permanently record the energy consumption and CO2 footprint of a manufacturing batch.
+     * @dev Access: Caller MUST possess `CARBON_REPORTER_ROLE` or `ADMIN_ROLE`.
+     *      The Carbon NFT is an independent token — it does NOT have a lifecycle stage.
+     *      It is linked to a parent equipment token via `linkedEquipmentId` (pass 0 for standalone).
+     * @param to                  Recipient address of the Carbon NFT.
+     * @param tokenId             Unique token ID for this Carbon NFT (must not already exist).
+     * @param linkedEquipmentId   Token ID of the parent equipment (0 if not linked).
+     * @param energyWh            Energy consumed in Watt-hours (e.g. 120000 = 120 kWh).
+     * @param co2Grams            CO2 emitted in grams (e.g. 32000 = 32 kg).
+     * @param sustainabilityScore Sustainability index 0-100.
+     * @param reportingPeriod     Human-readable period string (e.g. "Batch-B101" or "2024-Q1").
+     * @param initialURI          IPFS URI for the Carbon NFT metadata JSON.
+     */
+    function mintCarbonNFT(
+        address to,
+        uint256 tokenId,
+        uint256 linkedEquipmentId,
+        uint256 energyWh,
+        uint256 co2Grams,
+        uint8   sustainabilityScore,
+        string calldata reportingPeriod,
+        string calldata initialURI
+    ) external {
+        require(
+            hasRole(CARBON_REPORTER_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender),
+            "Only CARBON_REPORTER or ADMIN"
+        );
+        require(sustainabilityScore <= 100, "Score must be 0-100");
+        if (linkedEquipmentId != 0) {
+            require(exists(linkedEquipmentId), "Linked equipment must exist");
+        }
+
+        _safeMint(to, tokenId);
+        tokenUris[tokenId]  = initialURI;
+        tokenType[tokenId]  = TokenType.Carbon;
+
+        carbonRecords[tokenId] = CarbonData({
+            energyWh:            energyWh,
+            co2Grams:            co2Grams,
+            sustainabilityScore: sustainabilityScore,
+            reportingPeriod:     reportingPeriod,
+            linkedEquipmentId:   linkedEquipmentId,
+            lastUpdated:         block.timestamp
+        });
+
+        emit CarbonNFTMinted(tokenId, linkedEquipmentId, energyWh, co2Grams, sustainabilityScore, reportingPeriod);
+    }
+
+    /**
+     * @notice Updates the carbon metrics of an existing Carbon NFT (e.g. after IoT sensor correction).
+     * @dev Access: Caller MUST possess `CARBON_REPORTER_ROLE` or `ADMIN_ROLE`.
+     * @param tokenId             The Carbon NFT to update.
+     * @param energyWh            Revised energy in Watt-hours.
+     * @param co2Grams            Revised CO2 in grams.
+     * @param sustainabilityScore Revised sustainability score 0-100.
+     * @param notarizationHash    IOTA Notarization hash verifying the new sensor reading.
+     */
+    function updateCarbonData(
+        uint256 tokenId,
+        uint256 energyWh,
+        uint256 co2Grams,
+        uint8   sustainabilityScore,
+        bytes32 notarizationHash
+    ) external tokenExists(tokenId) {
+        require(
+            hasRole(CARBON_REPORTER_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender),
+            "Only CARBON_REPORTER or ADMIN"
+        );
+        require(tokenType[tokenId] == TokenType.Carbon, "Not a Carbon NFT");
+        require(sustainabilityScore <= 100, "Score must be 0-100");
+
+        CarbonData storage cd = carbonRecords[tokenId];
+        cd.energyWh            = energyWh;
+        cd.co2Grams            = co2Grams;
+        cd.sustainabilityScore = sustainabilityScore;
+        cd.lastUpdated         = block.timestamp;
+
+        emit CarbonDataUpdated(tokenId, energyWh, co2Grams, sustainabilityScore, notarizationHash);
     }
 
     /* =============================================
@@ -396,15 +559,45 @@ contract ManufacturingDPP is ERC721, AccessControl {
     function getRoles(address account)
         external
         view
-        returns (bool foundry, bool machining, bool oem, bool mro, bool admin)
+        returns (bool foundry, bool machining, bool oem, bool mro, bool admin, bool carbonReporter)
     {
         return (
             hasRole(FOUNDRY_ROLE, account),
             hasRole(MACHINING_ROLE, account),
             hasRole(OEM_ROLE, account),
             hasRole(MRO_ROLE, account),
-            hasRole(ADMIN_ROLE, account)
+            hasRole(ADMIN_ROLE, account),
+            hasRole(CARBON_REPORTER_ROLE, account)
         );
+    }
+
+    /**
+     * @notice Returns the full carbon footprint record for a given Carbon NFT.
+     * @dev Reverts if the token does not exist or is not a Carbon NFT.
+     * @param tokenId The Carbon NFT token ID to query.
+     * @return energyWh            Energy consumed in Watt-hours.
+     * @return co2Grams            CO2 emitted in grams.
+     * @return sustainabilityScore Sustainability score 0-100.
+     * @return reportingPeriod     Human-readable reporting period.
+     * @return linkedEquipmentId   Parent equipment token ID (0 if standalone).
+     * @return lastUpdated         Block timestamp of the last update.
+     */
+    function getCarbonData(uint256 tokenId)
+        external
+        view
+        returns (
+            uint256 energyWh,
+            uint256 co2Grams,
+            uint8   sustainabilityScore,
+            string memory reportingPeriod,
+            uint256 linkedEquipmentId,
+            uint256 lastUpdated
+        )
+    {
+        require(exists(tokenId), "Token does not exist");
+        require(tokenType[tokenId] == TokenType.Carbon, "Not a Carbon NFT");
+        CarbonData storage cd = carbonRecords[tokenId];
+        return (cd.energyWh, cd.co2Grams, cd.sustainabilityScore, cd.reportingPeriod, cd.linkedEquipmentId, cd.lastUpdated);
     }
 
     /**
