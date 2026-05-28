@@ -563,7 +563,10 @@
         <div class="logo-sub">Digital Product Passport</div>
       </div>
     </div>
-    <button id="connectBtn" onclick="connectWallet()">🦊 Connect MetaMask</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="switchBtn" onclick="switchAccount()" style="display:none;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#94a3b8;font-family:Inter,sans-serif;font-size:13px;font-weight:500;cursor:pointer;" title="Switch MetaMask account">⇄ Switch</button>
+      <button id="connectBtn" onclick="connectWallet()">🦊 Connect MetaMask</button>
+    </div>
   </div>
 </header>
 
@@ -598,6 +601,9 @@
     <div class="status-item">
       <span class="status-label">Your Roles</span>
       <div id="userRoles" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;"></div>
+    </div>
+    <div id="noRoleWarning" style="display:none;margin-left:auto;padding:10px 16px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;font-size:12px;color:#f87171;">
+      ⚠️ No roles — switch to deployer account to mint
     </div>
   </div>
 
@@ -891,6 +897,39 @@
   });
 
   // ─── WALLET ───────────────────────────────────────────────────────────
+  // Auto-detect account switch in MetaMask
+  if (window.ethereum) {
+    window.ethereum.on('accountsChanged', async (accounts) => {
+      if (accounts.length === 0) {
+        // Disconnected
+        document.getElementById('connectBtn').textContent = '🦊 Connect MetaMask';
+        document.getElementById('connectBtn').classList.remove('connected');
+        document.getElementById('switchBtn').style.display = 'none';
+        document.getElementById('walletStatus').style.display = 'none';
+        signer = null; contract = null; userAddress = null;
+        showToast('Wallet disconnected', 'info');
+      } else {
+        // Account changed — reconnect silently
+        showToast('Account changed — reconnecting...', 'info');
+        await connectWallet();
+      }
+    });
+    window.ethereum.on('chainChanged', () => window.location.reload());
+  }
+
+  async function switchAccount() {
+    if (!window.ethereum) return;
+    try {
+      await window.ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }]
+      });
+      // accountsChanged event fires automatically after this
+    } catch(e) {
+      showToast('Account switch cancelled', 'info');
+    }
+  }
+
   async function connectWallet() {
     if (!window.ethereum) return showToast("MetaMask not found. Please install it.", "error");
     try {
@@ -918,6 +957,7 @@
       const btn = document.getElementById('connectBtn');
       btn.textContent = `✅ ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
       btn.classList.add('connected');
+      document.getElementById('switchBtn').style.display = 'block';
 
       document.getElementById('walletAddr').textContent = userAddress;
       document.getElementById('networkName').textContent = 'Ethereum Sepolia';
@@ -926,13 +966,17 @@
       // Load roles
       const roles = await contract.getRoles(userAddress);
       const rolesEl = document.getElementById('userRoles');
+      const hasAnyRole = roles.admin || roles.foundry || roles.oem || roles.mro || roles.machining;
       rolesEl.innerHTML = '';
       if (roles.admin)    rolesEl.innerHTML += '<span class="role-badge admin">ADMIN</span>';
       if (roles.foundry)  rolesEl.innerHTML += '<span class="role-badge foundry">FOUNDRY</span>';
       if (roles.oem)      rolesEl.innerHTML += '<span class="role-badge oem">OEM</span>';
       if (roles.mro)      rolesEl.innerHTML += '<span class="role-badge mro">MRO</span>';
-      if (!roles.admin && !roles.foundry && !roles.oem && !roles.mro) {
+      if (!hasAnyRole) {
         rolesEl.innerHTML = '<span class="role-badge" style="color:var(--text-muted);">No roles assigned</span>';
+        document.getElementById('noRoleWarning').style.display = 'block';
+      } else {
+        document.getElementById('noRoleWarning').style.display = 'none';
       }
 
       showToast(`Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`, "success");
