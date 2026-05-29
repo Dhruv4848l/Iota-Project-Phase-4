@@ -4,7 +4,6 @@ pragma solidity 0.8.33;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-
 /**
  * @title ManufacturingDPP
  * @author IOTA DPP Development Team
@@ -49,9 +48,9 @@ contract ManufacturingDPP is ERC721, AccessControl {
      * @dev Equipment and Part tokens track physical components; Carbon tokens track environmental impact.
      */
     enum TokenType {
-        Equipment,  // Top-level aerospace equipment or batch record
-        Part,       // Sub-component linked to a parent equipment token
-        Carbon      // Carbon footprint & sustainability passport
+        Equipment, // Top-level aerospace equipment or batch record
+        Part, // Sub-component linked to a parent equipment token
+        Carbon // Carbon footprint & sustainability passport
     }
 
     /// @notice Stores the type classification for every minted token.
@@ -73,8 +72,8 @@ contract ManufacturingDPP is ERC721, AccessControl {
     struct CarbonData {
         uint256 energyWh;
         uint256 co2Grams;
-        uint8   sustainabilityScore;
-        string  reportingPeriod;
+        uint8 sustainabilityScore;
+        string reportingPeriod;
         uint256 linkedEquipmentId;
         uint256 lastUpdated;
     }
@@ -188,8 +187,8 @@ contract ManufacturingDPP is ERC721, AccessControl {
         uint256 indexed linkedEquipmentId,
         uint256 energyWh,
         uint256 co2Grams,
-        uint8   sustainabilityScore,
-        string  reportingPeriod
+        uint8 sustainabilityScore,
+        string reportingPeriod
     );
 
     /**
@@ -201,11 +200,7 @@ contract ManufacturingDPP is ERC721, AccessControl {
      * @param notarizationHash    IOTA Notarization hash verifying the updated reading.
      */
     event CarbonDataUpdated(
-        uint256 indexed tokenId,
-        uint256 energyWh,
-        uint256 co2Grams,
-        uint8   sustainabilityScore,
-        bytes32 notarizationHash
+        uint256 indexed tokenId, uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, bytes32 notarizationHash
     );
 
     /* =============================================
@@ -317,7 +312,7 @@ contract ManufacturingDPP is ERC721, AccessControl {
         uint256 linkedEquipmentId,
         uint256 energyWh,
         uint256 co2Grams,
-        uint8   sustainabilityScore,
+        uint8 sustainabilityScore,
         string calldata reportingPeriod,
         string calldata initialURI
     ) external {
@@ -331,16 +326,16 @@ contract ManufacturingDPP is ERC721, AccessControl {
         }
 
         _safeMint(to, tokenId);
-        tokenUris[tokenId]  = initialURI;
-        tokenType[tokenId]  = TokenType.Carbon;
+        tokenUris[tokenId] = initialURI;
+        tokenType[tokenId] = TokenType.Carbon;
 
         carbonRecords[tokenId] = CarbonData({
-            energyWh:            energyWh,
-            co2Grams:            co2Grams,
+            energyWh: energyWh,
+            co2Grams: co2Grams,
             sustainabilityScore: sustainabilityScore,
-            reportingPeriod:     reportingPeriod,
-            linkedEquipmentId:   linkedEquipmentId,
-            lastUpdated:         block.timestamp
+            reportingPeriod: reportingPeriod,
+            linkedEquipmentId: linkedEquipmentId,
+            lastUpdated: block.timestamp
         });
 
         emit CarbonNFTMinted(tokenId, linkedEquipmentId, energyWh, co2Grams, sustainabilityScore, reportingPeriod);
@@ -359,7 +354,7 @@ contract ManufacturingDPP is ERC721, AccessControl {
         uint256 tokenId,
         uint256 energyWh,
         uint256 co2Grams,
-        uint8   sustainabilityScore,
+        uint8 sustainabilityScore,
         bytes32 notarizationHash
     ) external tokenExists(tokenId) {
         require(
@@ -370,10 +365,10 @@ contract ManufacturingDPP is ERC721, AccessControl {
         require(sustainabilityScore <= 100, "Score must be 0-100");
 
         CarbonData storage cd = carbonRecords[tokenId];
-        cd.energyWh            = energyWh;
-        cd.co2Grams            = co2Grams;
+        cd.energyWh = energyWh;
+        cd.co2Grams = co2Grams;
         cd.sustainabilityScore = sustainabilityScore;
-        cd.lastUpdated         = block.timestamp;
+        cd.lastUpdated = block.timestamp;
 
         emit CarbonDataUpdated(tokenId, energyWh, co2Grams, sustainabilityScore, notarizationHash);
     }
@@ -588,7 +583,7 @@ contract ManufacturingDPP is ERC721, AccessControl {
         returns (
             uint256 energyWh,
             uint256 co2Grams,
-            uint8   sustainabilityScore,
+            uint8 sustainabilityScore,
             string memory reportingPeriod,
             uint256 linkedEquipmentId,
             uint256 lastUpdated
@@ -597,7 +592,8 @@ contract ManufacturingDPP is ERC721, AccessControl {
         require(exists(tokenId), "Token does not exist");
         require(tokenType[tokenId] == TokenType.Carbon, "Not a Carbon NFT");
         CarbonData storage cd = carbonRecords[tokenId];
-        return (cd.energyWh, cd.co2Grams, cd.sustainabilityScore, cd.reportingPeriod, cd.linkedEquipmentId, cd.lastUpdated);
+        return
+            (cd.energyWh, cd.co2Grams, cd.sustainabilityScore, cd.reportingPeriod, cd.linkedEquipmentId, cd.lastUpdated);
     }
 
     /**

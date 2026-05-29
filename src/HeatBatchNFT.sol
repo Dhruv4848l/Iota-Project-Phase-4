@@ -15,13 +15,12 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
  *         fully on-chain, no external IPFS dependency required.
  */
 contract HeatBatchNFT is ERC721, AccessControl {
-
     /* ─────────────────────────────────────────────
        ROLES
     ───────────────────────────────────────────── */
 
     bytes32 public constant FOUNDRY_ROLE = keccak256("FOUNDRY_ROLE");
-    bytes32 public constant ADMIN_ROLE   = keccak256("ADMIN_ROLE");
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     /* ─────────────────────────────────────────────
        DATA STRUCTURES
@@ -32,12 +31,12 @@ contract HeatBatchNFT is ERC721, AccessControl {
      * @dev All temperatures in °C, pressures in bar, times in seconds/minutes.
      */
     struct ProcessParams {
-        uint16 pouringTemp;       // °C  (e.g. 692)
+        uint16 pouringTemp; // °C  (e.g. 692)
         uint16 injectionPressure; // bar (e.g. 35)
-        uint16 injectionTime;     // seconds (e.g. 30)
-        uint8  humidity;          // % RH (e.g. 22)
-        uint8  roomTemp;          // °C  (e.g. 25)
-        uint16 processDuration;   // minutes (e.g. 45)
+        uint16 injectionTime; // seconds (e.g. 30)
+        uint8 humidity; // % RH (e.g. 22)
+        uint8 roomTemp; // °C  (e.g. 25)
+        uint16 processDuration; // minutes (e.g. 45)
     }
 
     /**
@@ -45,14 +44,14 @@ contract HeatBatchNFT is ERC721, AccessControl {
      * @dev  e.g. Si = 7.20% is stored as 720.  Decode: value / 100.0
      */
     struct ChemComposition {
-        uint16 si;  // Silicon
-        uint16 fe;  // Iron
-        uint16 mn;  // Manganese
-        uint16 mg;  // Magnesium
-        uint16 cu;  // Copper
-        uint16 zn;  // Zinc
-        uint16 ti;  // Titanium
-        uint16 al;  // Aluminium
+        uint16 si; // Silicon
+        uint16 fe; // Iron
+        uint16 mn; // Manganese
+        uint16 mg; // Magnesium
+        uint16 cu; // Copper
+        uint16 zn; // Zinc
+        uint16 ti; // Titanium
+        uint16 al; // Aluminium
     }
 
     /// @notice Boolean defect flags for the batch.
@@ -65,13 +64,13 @@ contract HeatBatchNFT is ERC721, AccessControl {
 
     /// @notice Complete on-chain record for one manufacturing heat batch.
     struct HeatBatch {
-        string          heatNo;
-        uint256         mintTimestamp;
-        string          manufacturer;
-        ProcessParams   processParams;
+        string heatNo;
+        uint256 mintTimestamp;
+        string manufacturer;
+        ProcessParams processParams;
         ChemComposition chemComp;
-        DefectInfo      defects;
-        uint8           qualityScore;   // 0-100
+        DefectInfo defects;
+        uint8 qualityScore; // 0-100
     }
 
     /* ─────────────────────────────────────────────
@@ -97,11 +96,7 @@ contract HeatBatchNFT is ERC721, AccessControl {
     ───────────────────────────────────────────── */
 
     event HeatBatchMinted(
-        uint256 indexed tokenId,
-        string  heatNo,
-        string  manufacturer,
-        uint8   qualityScore,
-        uint256 mintTimestamp
+        uint256 indexed tokenId, string heatNo, string manufacturer, uint8 qualityScore, uint256 mintTimestamp
     );
 
     /* ─────────────────────────────────────────────
@@ -110,7 +105,7 @@ contract HeatBatchNFT is ERC721, AccessControl {
 
     constructor() ERC721("Heat Batch NFT", "HBNFT") {
         _grantRole(ADMIN_ROLE, msg.sender);
-        _setRoleAdmin(ADMIN_ROLE,   ADMIN_ROLE);
+        _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(FOUNDRY_ROLE, ADMIN_ROLE);
     }
 
@@ -133,21 +128,18 @@ contract HeatBatchNFT is ERC721, AccessControl {
      * @return tokenId      The newly minted token ID.
      */
     function mintHeatBatch(
-        address         to,
+        address to,
         string calldata heatNo,
         string calldata manufacturer,
-        ProcessParams   calldata pp,
+        ProcessParams calldata pp,
         ChemComposition calldata cc,
-        DefectInfo      calldata di,
-        uint8           qualityScore
+        DefectInfo calldata di,
+        uint8 qualityScore
     ) external returns (uint256 tokenId) {
-        require(
-            hasRole(FOUNDRY_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender),
-            "Only FOUNDRY or ADMIN"
-        );
-        require(bytes(heatNo).length > 0,     "Heat number required");
-        require(!_heatNoMinted[heatNo],       "Heat number already minted");
-        require(qualityScore <= 100,          "Score must be 0-100");
+        require(hasRole(FOUNDRY_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender), "Only FOUNDRY or ADMIN");
+        require(bytes(heatNo).length > 0, "Heat number required");
+        require(!_heatNoMinted[heatNo], "Heat number already minted");
+        require(qualityScore <= 100, "Score must be 0-100");
 
         _tokenIdCounter++;
         tokenId = _tokenIdCounter;
@@ -155,17 +147,17 @@ contract HeatBatchNFT is ERC721, AccessControl {
         _safeMint(to, tokenId);
 
         _batches[tokenId] = HeatBatch({
-            heatNo:        heatNo,
+            heatNo: heatNo,
             mintTimestamp: block.timestamp,
-            manufacturer:  manufacturer,
+            manufacturer: manufacturer,
             processParams: pp,
-            chemComp:      cc,
-            defects:       di,
-            qualityScore:  qualityScore
+            chemComp: cc,
+            defects: di,
+            qualityScore: qualityScore
         });
 
         heatNoToTokenId[heatNo] = tokenId;
-        _heatNoMinted[heatNo]   = true;
+        _heatNoMinted[heatNo] = true;
         _allTokenIds.push(tokenId);
 
         emit HeatBatchMinted(tokenId, heatNo, manufacturer, qualityScore, block.timestamp);
@@ -230,22 +222,29 @@ contract HeatBatchNFT is ERC721, AccessControl {
         HeatBatch storage b = _batches[tokenId];
 
         bytes memory json = abi.encodePacked(
-            '{"name":"Heat Batch #', b.heatNo, '",',
+            '{"name":"Heat Batch #',
+            b.heatNo,
+            '",',
             '"description":"On-chain Manufacturing Traceability NFT - Heat Batch DPP",',
-            '"heatNo":"', b.heatNo, '",',
-            '"qualityScore":', Strings.toString(b.qualityScore), ',',
-            '"manufacturer":"', b.manufacturer, '",',
-            '"mintTimestamp":', Strings.toString(b.mintTimestamp), ',',
+            '"heatNo":"',
+            b.heatNo,
+            '",',
+            '"qualityScore":',
+            Strings.toString(b.qualityScore),
+            ",",
+            '"manufacturer":"',
+            b.manufacturer,
+            '",',
+            '"mintTimestamp":',
+            Strings.toString(b.mintTimestamp),
+            ",",
             _buildProcessParams(b.processParams),
             _buildChemComp(b.chemComp),
             _buildDefects(b.defects),
-            '}'
+            "}"
         );
 
-        return string(abi.encodePacked(
-            "data:application/json;base64,",
-            Base64.encode(json)
-        ));
+        return string(abi.encodePacked("data:application/json;base64,", Base64.encode(json)));
     }
 
     /* ─────────────────────────────────────────────
@@ -255,39 +254,72 @@ contract HeatBatchNFT is ERC721, AccessControl {
     function _buildProcessParams(ProcessParams storage pp) private view returns (bytes memory) {
         return abi.encodePacked(
             '"processParameters":{',
-            '"pouringTemp":',       Strings.toString(pp.pouringTemp),       ',',
-            '"injectionPressure":', Strings.toString(pp.injectionPressure), ',',
-            '"injectionTime":',     Strings.toString(pp.injectionTime),     ',',
-            '"humidity":',          Strings.toString(pp.humidity),          ',',
-            '"roomTemp":',          Strings.toString(pp.roomTemp),          ',',
-            '"processDuration":',   Strings.toString(pp.processDuration),
-            '},'
+            '"pouringTemp":',
+            Strings.toString(pp.pouringTemp),
+            ",",
+            '"injectionPressure":',
+            Strings.toString(pp.injectionPressure),
+            ",",
+            '"injectionTime":',
+            Strings.toString(pp.injectionTime),
+            ",",
+            '"humidity":',
+            Strings.toString(pp.humidity),
+            ",",
+            '"roomTemp":',
+            Strings.toString(pp.roomTemp),
+            ",",
+            '"processDuration":',
+            Strings.toString(pp.processDuration),
+            "},"
         );
     }
 
     function _buildChemComp(ChemComposition storage cc) private view returns (bytes memory) {
         return abi.encodePacked(
             '"chemicalComposition":{',
-            '"Si":', _dec2(cc.si), ',',
-            '"Fe":', _dec2(cc.fe), ',',
-            '"Mn":', _dec2(cc.mn), ',',
-            '"Mg":', _dec2(cc.mg), ',',
-            '"Cu":', _dec2(cc.cu), ',',
-            '"Zn":', _dec2(cc.zn), ',',
-            '"Ti":', _dec2(cc.ti), ',',
-            '"Al":', _dec2(cc.al),
-            '},'
+            '"Si":',
+            _dec2(cc.si),
+            ",",
+            '"Fe":',
+            _dec2(cc.fe),
+            ",",
+            '"Mn":',
+            _dec2(cc.mn),
+            ",",
+            '"Mg":',
+            _dec2(cc.mg),
+            ",",
+            '"Cu":',
+            _dec2(cc.cu),
+            ",",
+            '"Zn":',
+            _dec2(cc.zn),
+            ",",
+            '"Ti":',
+            _dec2(cc.ti),
+            ",",
+            '"Al":',
+            _dec2(cc.al),
+            "},"
         );
     }
 
     function _buildDefects(DefectInfo storage di) private view returns (bytes memory) {
         return abi.encodePacked(
             '"defects":{',
-            '"distortion":',   di.distortion   ? 'true' : 'false', ',',
-            '"roughSurface":', di.roughSurface  ? 'true' : 'false', ',',
-            '"shrinkage":',    di.shrinkage     ? 'true' : 'false', ',',
-            '"slagInclusion":', di.slagInclusion ? 'true' : 'false',
-            '}'
+            '"distortion":',
+            di.distortion ? "true" : "false",
+            ",",
+            '"roughSurface":',
+            di.roughSurface ? "true" : "false",
+            ",",
+            '"shrinkage":',
+            di.shrinkage ? "true" : "false",
+            ",",
+            '"slagInclusion":',
+            di.slagInclusion ? "true" : "false",
+            "}"
         );
     }
 
@@ -299,10 +331,9 @@ contract HeatBatchNFT is ERC721, AccessControl {
      */
     function _dec2(uint16 val) internal pure returns (string memory) {
         uint256 whole = val / 100;
-        uint256 frac  = val % 100;
-        string memory fracStr = frac < 10
-            ? string(abi.encodePacked("0", Strings.toString(frac)))
-            : Strings.toString(frac);
+        uint256 frac = val % 100;
+        string memory fracStr =
+            frac < 10 ? string(abi.encodePacked("0", Strings.toString(frac))) : Strings.toString(frac);
         return string(abi.encodePacked(Strings.toString(whole), ".", fracStr));
     }
 
@@ -310,9 +341,7 @@ contract HeatBatchNFT is ERC721, AccessControl {
        ERC165 OVERRIDE
     ───────────────────────────────────────────── */
 
-    function supportsInterface(bytes4 interfaceId)
-        public view override(ERC721, AccessControl) returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

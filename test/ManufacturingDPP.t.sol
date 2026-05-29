@@ -365,13 +365,8 @@ contract ManufacturingDPPTest is Test {
     function test_MintCarbonNFT_AdminCanMint() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, true);
-        emit ManufacturingDPP.CarbonNFTMinted(
-            CARBON_ID, EQUIPMENT_ID, 120_000, 32_000, 72, "Batch-B101"
-        );
-        dpp.mintCarbonNFT(
-            admin, CARBON_ID, EQUIPMENT_ID,
-            120_000, 32_000, 72, "Batch-B101", "ipfs://QmCarbon1"
-        );
+        emit ManufacturingDPP.CarbonNFTMinted(CARBON_ID, EQUIPMENT_ID, 120_000, 32_000, 72, "Batch-B101");
+        dpp.mintCarbonNFT(admin, CARBON_ID, EQUIPMENT_ID, 120_000, 32_000, 72, "Batch-B101", "ipfs://QmCarbon1");
         assertTrue(dpp.exists(CARBON_ID));
         assertEq(uint8(dpp.tokenType(CARBON_ID)), uint8(ManufacturingDPP.TokenType.Carbon));
     }
@@ -379,65 +374,47 @@ contract ManufacturingDPPTest is Test {
     function test_MintCarbonNFT_ReporterCanMint() public {
         _setupCarbonReporter();
         vm.prank(carbonReporter);
-        dpp.mintCarbonNFT(
-            carbonReporter, CARBON_ID, EQUIPMENT_ID,
-            80_000, 20_000, 85, "2024-Q1", "ipfs://QmCarbon2"
-        );
+        dpp.mintCarbonNFT(carbonReporter, CARBON_ID, EQUIPMENT_ID, 80_000, 20_000, 85, "2024-Q1", "ipfs://QmCarbon2");
         assertTrue(dpp.exists(CARBON_ID));
     }
 
     function test_MintCarbonNFT_RevertStranger() public {
         vm.prank(stranger);
         vm.expectRevert("Only CARBON_REPORTER or ADMIN");
-        dpp.mintCarbonNFT(
-            stranger, CARBON_ID, 0,
-            100_000, 50_000, 50, "2024-Q2", "ipfs://QmCarbon3"
-        );
+        dpp.mintCarbonNFT(stranger, CARBON_ID, 0, 100_000, 50_000, 50, "2024-Q2", "ipfs://QmCarbon3");
     }
 
     function test_MintCarbonNFT_RevertInvalidScore() public {
         vm.prank(admin);
         vm.expectRevert("Score must be 0-100");
-        dpp.mintCarbonNFT(
-            admin, CARBON_ID, 0,
-            100_000, 50_000, 101, "2024-Q2", "ipfs://QmCarbon4"
-        );
+        dpp.mintCarbonNFT(admin, CARBON_ID, 0, 100_000, 50_000, 101, "2024-Q2", "ipfs://QmCarbon4");
     }
 
     function test_MintCarbonNFT_RevertLinkedEquipmentNotExist() public {
         vm.prank(admin);
         vm.expectRevert("Linked equipment must exist");
-        dpp.mintCarbonNFT(
-            admin, CARBON_ID, 9999,
-            100_000, 50_000, 60, "2024-Q2", "ipfs://QmCarbon5"
-        );
+        dpp.mintCarbonNFT(admin, CARBON_ID, 9999, 100_000, 50_000, 60, "2024-Q2", "ipfs://QmCarbon5");
     }
 
     function test_MintCarbonNFT_StandaloneWithZeroLink() public {
         vm.prank(admin);
         // linkedEquipmentId = 0 means standalone — should not revert
-        dpp.mintCarbonNFT(
-            admin, CARBON_ID, 0,
-            50_000, 10_000, 90, "Standalone", "ipfs://QmCarbon6"
-        );
+        dpp.mintCarbonNFT(admin, CARBON_ID, 0, 50_000, 10_000, 90, "Standalone", "ipfs://QmCarbon6");
         assertTrue(dpp.exists(CARBON_ID));
     }
 
     function test_GetCarbonData_ReturnsCorrectFields() public {
         vm.prank(admin);
-        dpp.mintCarbonNFT(
-            admin, CARBON_ID, EQUIPMENT_ID,
-            120_000, 32_000, 72, "Batch-B101", "ipfs://QmCarbon1"
-        );
+        dpp.mintCarbonNFT(admin, CARBON_ID, EQUIPMENT_ID, 120_000, 32_000, 72, "Batch-B101", "ipfs://QmCarbon1");
 
         (uint256 energyWh, uint256 co2Grams, uint8 score, string memory period, uint256 linked,) =
             dpp.getCarbonData(CARBON_ID);
 
-        assertEq(energyWh,  120_000);
-        assertEq(co2Grams,  32_000);
-        assertEq(score,     72);
-        assertEq(period,    "Batch-B101");
-        assertEq(linked,    EQUIPMENT_ID);
+        assertEq(energyWh, 120_000);
+        assertEq(co2Grams, 32_000);
+        assertEq(score, 72);
+        assertEq(period, "Batch-B101");
+        assertEq(linked, EQUIPMENT_ID);
     }
 
     function test_GetCarbonData_RevertNonCarbonToken() public {
@@ -447,10 +424,7 @@ contract ManufacturingDPPTest is Test {
 
     function test_UpdateCarbonData_AdminUpdates() public {
         vm.prank(admin);
-        dpp.mintCarbonNFT(
-            admin, CARBON_ID, EQUIPMENT_ID,
-            120_000, 32_000, 72, "Batch-B101", "ipfs://QmCarbon1"
-        );
+        dpp.mintCarbonNFT(admin, CARBON_ID, EQUIPMENT_ID, 120_000, 32_000, 72, "Batch-B101", "ipfs://QmCarbon1");
 
         vm.prank(admin);
         vm.expectEmit(true, false, false, true);
@@ -471,10 +445,7 @@ contract ManufacturingDPPTest is Test {
 
     function test_UpdateCarbonData_RevertStranger() public {
         vm.prank(admin);
-        dpp.mintCarbonNFT(
-            admin, CARBON_ID, 0,
-            100_000, 50_000, 60, "2024-Q2", "ipfs://QmCarbon7"
-        );
+        dpp.mintCarbonNFT(admin, CARBON_ID, 0, 100_000, 50_000, 60, "2024-Q2", "ipfs://QmCarbon7");
         vm.prank(stranger);
         vm.expectRevert("Only CARBON_REPORTER or ADMIN");
         dpp.updateCarbonData(CARBON_ID, 90_000, 45_000, 65, NOTARIZATION);
@@ -482,10 +453,7 @@ contract ManufacturingDPPTest is Test {
 
     function test_CarbonNFT_TokenTypeIsCarbon() public {
         vm.prank(admin);
-        dpp.mintCarbonNFT(
-            admin, CARBON_ID, 0,
-            100_000, 50_000, 60, "2024-Q2", "ipfs://QmCarbon8"
-        );
+        dpp.mintCarbonNFT(admin, CARBON_ID, 0, 100_000, 50_000, 60, "2024-Q2", "ipfs://QmCarbon8");
         assertEq(uint8(dpp.tokenType(CARBON_ID)), uint8(ManufacturingDPP.TokenType.Carbon));
         assertEq(uint8(dpp.tokenType(EQUIPMENT_ID)), uint8(ManufacturingDPP.TokenType.Equipment));
         assertEq(uint8(dpp.tokenType(PART_ID)), uint8(ManufacturingDPP.TokenType.Part));

@@ -7,31 +7,23 @@ import {HeatBatchNFT} from "../src/HeatBatchNFT.sol";
 contract HeatBatchNFTTest is Test {
     HeatBatchNFT public nft;
 
-    address admin   = address(0xA1);
+    address admin = address(0xA1);
     address foundry = address(0xA2);
     address stranger = address(0xA3);
 
     HeatBatchNFT.ProcessParams defaultPP = HeatBatchNFT.ProcessParams({
-        pouringTemp:       692,
-        injectionPressure: 35,
-        injectionTime:     30,
-        humidity:          22,
-        roomTemp:          25,
-        processDuration:   45
+        pouringTemp: 692, injectionPressure: 35, injectionTime: 30, humidity: 22, roomTemp: 25, processDuration: 45
     });
 
     // Si=7.20, Fe=0.60, Mn=0.30, Mg=0.30, Cu=0.10, Zn=0.10, Ti=0.10, Al=91.20
-    HeatBatchNFT.ChemComposition defaultCC = HeatBatchNFT.ChemComposition({
-        si: 720, fe: 60, mn: 30, mg: 30, cu: 10, zn: 10, ti: 10, al: 9120
-    });
+    HeatBatchNFT.ChemComposition defaultCC =
+        HeatBatchNFT.ChemComposition({si: 720, fe: 60, mn: 30, mg: 30, cu: 10, zn: 10, ti: 10, al: 9120});
 
-    HeatBatchNFT.DefectInfo noDefects = HeatBatchNFT.DefectInfo({
-        distortion: false, roughSurface: false, shrinkage: false, slagInclusion: false
-    });
+    HeatBatchNFT.DefectInfo noDefects =
+        HeatBatchNFT.DefectInfo({distortion: false, roughSurface: false, shrinkage: false, slagInclusion: false});
 
-    HeatBatchNFT.DefectInfo withDefects = HeatBatchNFT.DefectInfo({
-        distortion: true, roughSurface: false, shrinkage: true, slagInclusion: false
-    });
+    HeatBatchNFT.DefectInfo withDefects =
+        HeatBatchNFT.DefectInfo({distortion: true, roughSurface: false, shrinkage: true, slagInclusion: false});
 
     function setUp() public {
         vm.startPrank(admin);
@@ -46,10 +38,8 @@ contract HeatBatchNFTTest is Test {
 
     function test_MintHeatBatch_AdminCanMint() public {
         vm.prank(admin);
-        uint256 tokenId = nft.mintHeatBatch(
-            admin, "H001", "Precision Foundry Ltd.",
-            defaultPP, defaultCC, noDefects, 92
-        );
+        uint256 tokenId =
+            nft.mintHeatBatch(admin, "H001", "Precision Foundry Ltd.", defaultPP, defaultCC, noDefects, 92);
         assertEq(tokenId, 1);
         assertTrue(nft.exists(tokenId));
         assertEq(nft.ownerOf(tokenId), admin);
@@ -57,10 +47,7 @@ contract HeatBatchNFTTest is Test {
 
     function test_MintHeatBatch_FoundryCanMint() public {
         vm.prank(foundry);
-        uint256 tokenId = nft.mintHeatBatch(
-            foundry, "H002", "Foundry A",
-            defaultPP, defaultCC, noDefects, 85
-        );
+        uint256 tokenId = nft.mintHeatBatch(foundry, "H002", "Foundry A", defaultPP, defaultCC, noDefects, 85);
         assertEq(tokenId, 1);
         assertEq(nft.ownerOf(tokenId), foundry);
     }
@@ -111,7 +98,7 @@ contract HeatBatchNFTTest is Test {
         nft.mintHeatBatch(admin, "H001", "Precision Foundry Ltd.", defaultPP, defaultCC, withDefects, 82);
 
         HeatBatchNFT.HeatBatch memory b = nft.getHeatBatch(1);
-        assertEq(b.heatNo,       "H001");
+        assertEq(b.heatNo, "H001");
         assertEq(b.manufacturer, "Precision Foundry Ltd.");
         assertEq(b.qualityScore, 82);
         assertTrue(b.defects.distortion);
@@ -186,7 +173,7 @@ contract HeatBatchNFTTest is Test {
         string memory uri = nft.tokenURI(1);
         // Should start with data:application/json;base64,
         bytes memory uriBytes = bytes(uri);
-        bytes memory prefix   = bytes("data:application/json;base64,");
+        bytes memory prefix = bytes("data:application/json;base64,");
         for (uint256 i = 0; i < prefix.length; i++) {
             assertEq(uriBytes[i], prefix[i]);
         }
