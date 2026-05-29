@@ -3,986 +3,694 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IOTA Manufacturing DPP — Digital Product Passport</title>
-  <meta name="description" content="Blockchain-based Digital Product Passport system for aerospace manufacturing on IOTA EVM." />
+  <title>Heat Batch NFT — Manufacturing Traceability DPP</title>
+  <meta name="description" content="On-chain Heat Batch NFT system for manufacturing traceability. Each token represents one manufacturing batch with process parameters, chemical composition, defect data, and quality scores stored immutably on Ethereum." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
   <style>
     :root {
-      --bg: #060912;
-      --surface: rgba(255,255,255,0.04);
-      --surface-hover: rgba(255,255,255,0.07);
-      --border: rgba(255,255,255,0.08);
-      --border-glow: rgba(99,102,241,0.4);
-      --primary: #6366f1;
-      --primary-light: #818cf8;
-      --accent: #06b6d4;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --text: #f1f5f9;
+      --bg:         #050b14;
+      --surface:    #0c1827;
+      --surface2:   #112035;
+      --border:     rgba(16,185,129,0.12);
+      --border2:    rgba(255,255,255,0.06);
+      --green:      #10b981;
+      --green-dim:  rgba(16,185,129,0.15);
+      --teal:       #06b6d4;
+      --teal-dim:   rgba(6,182,212,0.12);
+      --amber:      #f59e0b;
+      --amber-dim:  rgba(245,158,11,0.12);
+      --red:        #ef4444;
+      --red-dim:    rgba(239,68,68,0.12);
+      --blue:       #3b82f6;
+      --blue-dim:   rgba(59,130,246,0.12);
+      --text:       #f1f5f9;
       --text-muted: #64748b;
-      --text-dim: #94a3b8;
-      --radius: 16px;
-      --radius-sm: 10px;
+      --text-dim:   #94a3b8;
+      --font:       'Inter', sans-serif;
+      --mono:       'JetBrains Mono', monospace;
+      --radius:     14px;
+      --radius-sm:  8px;
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font);
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       overflow-x: hidden;
     }
 
-    /* Animated background */
+    /* ── GRID BG ── */
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99,102,241,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(6,182,212,0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 70%);
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
       pointer-events: none;
-      z-index: 0;
     }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
-
-    /* HEADER */
+    /* ── HEADER ── */
     header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(5,11,20,0.85);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      background: rgba(6,9,18,0.8);
-      backdrop-filter: blur(20px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      padding: 0 32px;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
     }
-
-    .header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    .logo { display: flex; align-items: center; gap: 12px; }
     .logo-icon {
-      width: 38px;
-      height: 38px;
-      background: linear-gradient(135deg, #6366f1, #06b6d4);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      display: flex; align-items: center; justify-content: center;
       font-size: 18px;
-      box-shadow: 0 0 20px rgba(99,102,241,0.3);
     }
-
-    .logo-text { line-height: 1.2; }
-    .logo-title { font-weight: 700; font-size: 15px; color: var(--text); }
-    .logo-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+    .logo-title { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+    .logo-sub   { font-size: 11px; color: var(--text-muted); }
 
     #connectBtn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 10px;
-      border: 1px solid var(--border-glow);
-      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(6,182,212,0.1));
-      color: var(--primary-light);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      padding: 10px 20px; border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--green-dim);
+      color: var(--green); font-family: var(--font); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .2s;
     }
-    #connectBtn:hover { background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(6,182,212,0.2)); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.2); }
-    #connectBtn.connected { border-color: rgba(16,185,129,0.4); color: var(--success); background: rgba(16,185,129,0.1); }
+    #connectBtn:hover { background: rgba(16,185,129,0.25); }
+    #connectBtn.connected { background: rgba(16,185,129,0.1); color: #34d399; border-color: rgba(16,185,129,0.3); }
+    #switchBtn {
+      display: none; padding: 10px 14px; border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: rgba(255,255,255,0.04); color: var(--text-muted);
+      font-family: var(--font); font-size: 13px; cursor: pointer; transition: all .2s;
+    }
+    #switchBtn:hover { background: rgba(255,255,255,0.08); }
 
-    /* HERO */
+    /* ── HERO ── */
     .hero {
-      padding: 60px 0 40px;
+      position: relative; z-index: 1;
+      padding: 60px 32px 40px;
       text-align: center;
+      max-width: 900px; margin: 0 auto;
     }
-
     .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 100px;
-      border: 1px solid var(--border-glow);
-      background: rgba(99,102,241,0.1);
-      font-size: 12px;
-      color: var(--primary-light);
-      font-weight: 500;
-      margin-bottom: 24px;
-      animation: pulse-border 3s ease infinite;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 100px;
+      background: var(--green-dim); border: 1px solid rgba(16,185,129,0.25);
+      font-size: 12px; font-weight: 600; color: var(--green); margin-bottom: 20px;
     }
-
-    @keyframes pulse-border {
-      0%, 100% { border-color: rgba(99,102,241,0.4); }
-      50% { border-color: rgba(99,102,241,0.8); }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    h1 {
+      font-size: clamp(28px, 5vw, 52px); font-weight: 800; letter-spacing: -1.5px;
+      line-height: 1.1; margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--green) 0%, var(--teal) 50%, #a78bfa 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
+    .hero p { color: var(--text-dim); font-size: 16px; max-width: 600px; margin: 0 auto 32px; }
 
-    .hero h1 {
-      font-size: clamp(32px, 5vw, 54px);
-      font-weight: 800;
-      line-height: 1.1;
-      background: linear-gradient(135deg, #f1f5f9 0%, #818cf8 50%, #06b6d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 16px;
+    /* ── STATS BAR ── */
+    .stats-bar {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px;
     }
-
-    .hero p {
-      color: var(--text-dim);
-      font-size: 16px;
-      max-width: 600px;
-      margin: 0 auto 32px;
-      line-height: 1.7;
+    .stat-chip {
+      padding: 10px 20px; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border2);
+      font-size: 13px;
     }
+    .stat-chip strong { color: var(--green); font-size: 20px; display: block; font-family: var(--mono); }
 
-    /* CONTRACT INFO BAR */
-    .info-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      margin-bottom: 48px;
-    }
-
-    .info-chip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: 100px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      font-size: 12px;
-      color: var(--text-dim);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .info-chip .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 6px var(--success);
-      animation: blink 2s ease infinite;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    /* WALLET STATUS */
+    /* ── WALLET STATUS BAR ── */
     #walletStatus {
-      display: none;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      margin-bottom: 32px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      align-items: center;
+      display: none; margin: 0 32px 24px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 24px;
+      display: none; align-items: center; gap: 24px; flex-wrap: wrap;
+    }
+    .ws-item { display: flex; flex-direction: column; gap: 2px; }
+    .ws-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+    .ws-value { font-size: 13px; font-family: var(--mono); color: var(--text-dim); }
+    .role-chip {
+      padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border); color: var(--text-muted);
+    }
+    .role-chip.admin   { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: #f87171; }
+    .role-chip.foundry { background: var(--green-dim); border-color: rgba(16,185,129,.3); color: #34d399; }
+
+    /* ── MAIN ── */
+    main { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 32px 80px; }
+
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex; gap: 4px; padding: 4px;
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius); width: fit-content; margin: 0 auto 32px;
+    }
+    .tab-btn {
+      padding: 10px 24px; border-radius: 10px; border: none;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all .2s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      background: var(--green-dim); border: 1px solid rgba(16,185,129,.3);
+      color: var(--green);
     }
 
-    .status-item { display: flex; flex-direction: column; gap: 2px; }
-    .status-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .status-value { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--text); }
-
-    .role-badge {
-      padding: 3px 10px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 600;
-      background: rgba(99,102,241,0.15);
-      border: 1px solid rgba(99,102,241,0.3);
-      color: var(--primary-light);
-    }
-    .role-badge.admin { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); color: #fbbf24; }
-    .role-badge.foundry { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.3); color: #22d3ee; }
-    .role-badge.oem { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: #34d399; }
-    .role-badge.mro { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #f87171; }
-
-    /* TABS */
-    .tabs {
-      display: flex;
-      gap: 4px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 4px;
-      margin-bottom: 32px;
-      overflow-x: auto;
-    }
-
-    .tab {
-      padding: 10px 18px;
-      border-radius: 8px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .tab:hover { color: var(--text); background: var(--surface-hover); }
-    .tab.active {
-      background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(6,182,212,0.15));
-      color: var(--primary-light);
-      border: 1px solid var(--border-glow);
-    }
-
-    /* PANELS */
+    /* ── PANEL ── */
     .panel { display: none; }
-    .panel.active { display: block; animation: fadeIn 0.3s ease; }
+    .panel.active { display: block; }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* CARDS */
+    /* ── CARDS ── */
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      margin-bottom: 20px;
-      transition: border-color 0.2s;
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 28px;
     }
-    .card:hover { border-color: rgba(255,255,255,0.12); }
-
     .card-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 16px; font-weight: 700; margin-bottom: 8px;
+    }
+    .card-icon {
+      width: 36px; height: 36px; border-radius: 10px; font-size: 17px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--green-dim);
+    }
+    .card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+
+    /* ── FORM ── */
+    .form-section { margin-bottom: 28px; }
+    .form-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--green); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .form-section-title::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .form-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .fg { display: flex; flex-direction: column; gap: 6px; }
+    .fg.full { grid-column: 1 / -1; }
+    label { font-size: 12px; font-weight: 500; color: var(--text-dim); }
+    input[type="text"], input[type="number"], select {
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border2);
+      color: var(--text); font-family: var(--font); font-size: 14px;
+      transition: border-color .2s; outline: none; width: 100%;
+    }
+    input:focus, select:focus { border-color: var(--green); }
+    .hint { font-size: 11px; color: var(--text-muted); }
+
+    /* Checkbox row */
+    .checkbox-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .checkbox-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+    .checkbox-item input[type="checkbox"] {
+      width: 16px; height: 16px; accent-color: var(--red); cursor: pointer;
     }
 
-    .card-title .icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-
-    .card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
-
-    /* FORM */
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
-    .form-full { grid-column: 1 / -1; }
-
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-label { font-size: 12px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-
-    .form-input, .form-select {
-      padding: 12px 16px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      outline: none;
-    }
-
-    .form-input:focus, .form-select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-    }
-
-    .form-select option { background: #1e293b; }
-    .form-input::placeholder { color: var(--text-muted); }
-
-    .form-hint { font-size: 11px; color: var(--text-muted); }
-
-    /* BUTTONS */
+    /* ── BUTTONS ── */
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
     .btn {
-      padding: 12px 24px;
-      border-radius: var(--radius-sm);
-      border: none;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      padding: 12px 28px; border-radius: var(--radius-sm);
+      font-family: var(--font); font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: all .2s;
     }
-
     .btn-primary {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: white;
-      box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+      background: linear-gradient(135deg, var(--green), #059669);
+      color: white; box-shadow: 0 4px 16px rgba(16,185,129,.3);
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
-    .btn-primary:active { transform: translateY(0); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(16,185,129,.4); }
     .btn-secondary {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
+      background: rgba(255,255,255,.04); border: 1px solid var(--border2); color: var(--text-dim);
     }
-    .btn-secondary:hover { border-color: var(--primary); color: var(--primary-light); }
+    .btn-secondary:hover { background: rgba(255,255,255,.08); color: var(--text); }
+    .btn-teal { background: linear-gradient(135deg, var(--teal), #0891b2); color: white; }
 
-    .btn-accent {
-      background: linear-gradient(135deg, #0891b2, #0e7490);
-      color: white;
-      box-shadow: 0 4px 16px rgba(6,182,212,0.25);
-    }
-    .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(6,182,212,0.35); }
-
-    /* RESULT BOX */
+    /* ── RESULT BOX ── */
     .result-box {
-      margin-top: 16px;
-      padding: 16px;
-      border-radius: var(--radius-sm);
-      border: 1px solid;
-      font-size: 13px;
-      line-height: 1.6;
-      font-family: 'JetBrains Mono', monospace;
-      display: none;
-      word-break: break-all;
+      margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-sm);
+      font-size: 13px; font-family: var(--mono); white-space: pre-wrap; display: none;
     }
-    .result-box.success { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3); color: #34d399; }
-    .result-box.error { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); color: #f87171; }
-    .result-box.info { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.3); color: #a5b4fc; }
-    .result-box.loading { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3); color: #fbbf24; }
+    .result-box.success { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.3); color: #34d399; }
+    .result-box.error   { background: var(--red-dim); border: 1px solid rgba(239,68,68,.3); color: #f87171; }
+    .result-box.loading { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.3); color: #fbbf24; }
 
-    /* TOKEN CARD */
-    .token-card {
-      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(6,182,212,0.05));
-      border: 1px solid var(--border-glow);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-top: 16px;
-      display: none;
+    /* ── DASHBOARD ── */
+    .dashboard-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .search-wrap { display: flex; gap: 8px; flex: 1; min-width: 200px; }
+    .search-wrap input { flex: 1; }
+
+    .nft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+    .nft-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 20px;
+      transition: all .2s; cursor: pointer; position: relative; overflow: hidden;
     }
-
-    .token-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
+    .nft-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--green), var(--teal));
+      opacity: 0; transition: opacity .2s;
     }
-
-    .token-id {
-      font-size: 28px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #818cf8, #06b6d4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .nft-card:hover { border-color: rgba(16,185,129,.3); transform: translateY(-2px); }
+    .nft-card:hover::before { opacity: 1; }
+    .nft-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .nft-heat-no { font-size: 18px; font-weight: 800; font-family: var(--mono); color: var(--green); }
+    .nft-token-id { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .quality-badge {
+      padding: 6px 12px; border-radius: 100px; font-size: 13px; font-weight: 700; font-family: var(--mono);
     }
+    .q-high   { background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3); color: #34d399; }
+    .q-medium { background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.3); color: #fbbf24; }
+    .q-low    { background: var(--red-dim); border: 1px solid rgba(239,68,68,.3); color: #f87171; }
 
-    .stage-badge {
-      padding: 6px 14px;
-      border-radius: 100px;
-      font-size: 12px;
-      font-weight: 600;
-      border: 1px solid;
+    .nft-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .nft-meta-item .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+    .nft-meta-item .value { font-size: 12px; color: var(--text-dim); font-family: var(--mono); margin-top: 2px; }
+
+    .defect-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .defect-chip {
+      padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 600;
     }
+    .defect-chip.bad  { background: var(--red-dim); border: 1px solid rgba(239,68,68,.3); color: #f87171; }
+    .defect-chip.good { background: var(--green-dim); border: 1px solid rgba(16,185,129,.3); color: #34d399; }
 
-    .stage-0 { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #818cf8; }
-    .stage-1 { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.4); color: #22d3ee; }
-    .stage-2 { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: #34d399; }
-    .stage-3 { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: #fbbf24; }
-    .stage-4 { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #f87171; }
-
-    .token-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 640px) { .token-grid { grid-template-columns: 1fr; } }
-
-    .token-field { display: flex; flex-direction: column; gap: 4px; }
-    .token-field-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .token-field-value { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); word-break: break-all; }
-
-    /* LIFECYCLE TIMELINE */
-    .lifecycle-track {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      margin: 24px 0;
-      overflow-x: auto;
-      padding: 4px 0;
+    .nft-card-footer {
+      border-top: 1px solid var(--border2); padding-top: 12px;
+      font-size: 11px; color: var(--text-muted); font-family: var(--mono);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
 
-    .lifecycle-step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      flex: 1;
-      min-width: 80px;
-      position: relative;
+    /* ── DETAIL MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.7); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center; padding: 20px;
     }
-
-    .lifecycle-step::after {
-      content: '';
-      position: absolute;
-      top: 15px;
-      left: 50%;
-      width: 100%;
-      height: 2px;
-      background: var(--border);
-      z-index: 0;
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; max-width: 800px; width: 100%;
+      max-height: 90vh; overflow-y: auto; position: relative;
     }
-
-    .lifecycle-step:last-child::after { display: none; }
-
-    .lifecycle-dot {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      position: relative;
-      z-index: 1;
-      transition: all 0.3s;
+    .modal-close {
+      position: absolute; top: 20px; right: 20px; width: 32px; height: 32px;
+      border-radius: 50%; background: rgba(255,255,255,.06); border: 1px solid var(--border2);
+      color: var(--text-muted); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
+    .modal-close:hover { background: var(--red-dim); color: var(--red); }
 
-    .lifecycle-dot.active { border-color: var(--primary); background: rgba(99,102,241,0.2); box-shadow: 0 0 12px rgba(99,102,241,0.4); }
-    .lifecycle-dot.done { border-color: var(--success); background: rgba(16,185,129,0.2); }
-    .lifecycle-label { font-size: 10px; color: var(--text-muted); text-align: center; line-height: 1.3; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .detail-field { background: rgba(255,255,255,.03); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 12px; }
+    .detail-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    .detail-value { font-size: 13px; font-family: var(--mono); color: var(--text-dim); }
 
-    /* DIVIDER */
-    .divider { height: 1px; background: var(--border); margin: 24px 0; }
-
-    /* STATS GRID */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      transition: all 0.2s;
+    /* ── LIFECYCLE TIMELINE ── */
+    .timeline {
+      display: flex; align-items: center; gap: 0; margin: 24px 0;
+      overflow-x: auto; padding-bottom: 8px;
     }
-    .stat-card:hover { border-color: var(--border-glow); transform: translateY(-2px); }
-
-    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .stat-value { font-size: 22px; font-weight: 700; color: var(--text); }
-    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
-
-    /* TOAST */
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      padding: 14px 20px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 500;
-      display: none;
-      z-index: 999;
-      max-width: 360px;
-      border: 1px solid;
-      backdrop-filter: blur(12px);
-      animation: slideIn 0.3s ease;
+    .tl-step {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      min-width: 120px;
     }
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    #toast.success { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: #34d399; }
-    #toast.error { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #f87171; }
-    #toast.info { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #a5b4fc; }
+    .tl-dot {
+      width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; background: var(--surface2); transition: all .3s;
+    }
+    .tl-dot.done { border-color: var(--green); background: var(--green-dim); }
+    .tl-dot.active { border-color: var(--teal); background: var(--teal-dim); animation: glow 2s infinite; }
+    @keyframes glow { 0%,100%{box-shadow:0 0 0 0 rgba(6,182,212,.4)} 50%{box-shadow:0 0 0 8px rgba(6,182,212,0)} }
+    .tl-label { font-size: 11px; text-align: center; color: var(--text-muted); }
+    .tl-label.done { color: var(--green); font-weight: 600; }
+    .tl-label.active { color: var(--teal); font-weight: 600; }
+    .tl-line { flex: 1; height: 2px; background: var(--border2); min-width: 40px; }
+    .tl-line.done { background: var(--green); }
 
-    /* SPINNER */
+    /* ── CHEM BARS ── */
+    .chem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .chem-bar-wrap { background: rgba(255,255,255,.03); border: 1px solid var(--border2); border-radius: 8px; padding: 10px; }
+    .chem-element { font-size: 11px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .chem-element span { color: var(--teal); font-family: var(--mono); }
+    .chem-bar-track { height: 4px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
+    .chem-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--teal), var(--green)); transition: width 1s ease; }
+
+    /* ── TOAST ── */
+    #toastContainer { position: fixed; top: 80px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 12px 20px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 500; backdrop-filter: blur(8px);
+      animation: slideIn .3s ease; max-width: 320px;
+    }
+    @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+    .toast.success { background: rgba(16,185,129,.9); color: white; }
+    .toast.error   { background: rgba(239,68,68,.9); color: white; }
+    .toast.info    { background: rgba(59,130,246,.9); color: white; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; color: var(--text-dim); margin-bottom: 8px; }
+
+    /* ── LOADING SPINNER ── */
     .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.2);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      display: inline-block;
+      display: inline-block; width: 20px; height: 20px;
+      border: 2px solid rgba(16,185,129,.3); border-top-color: var(--green);
+      border-radius: 50%; animation: spin .7s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin { to{ transform: rotate(360deg); } }
 
-    /* FOOTER */
-    footer {
-      margin-top: 80px;
-      padding: 32px 24px;
-      border-top: 1px solid var(--border);
-      text-align: center;
+    @media (max-width: 640px) {
+      header { padding: 0 16px; }
+      main { padding: 0 16px 60px; }
+      .hero { padding: 40px 16px 24px; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .chem-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    footer p { font-size: 12px; color: var(--text-muted); }
-    footer a { color: var(--primary-light); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- ── HEADER ─────────────────────────────────────── -->
 <header>
-  <div class="header-inner">
-    <div class="logo">
-      <div class="logo-icon">🏭</div>
-      <div class="logo-text">
-        <div class="logo-title">IOTA Manufacturing DPP</div>
-        <div class="logo-sub">Digital Product Passport</div>
-      </div>
+  <div class="logo">
+    <div class="logo-icon">🔥</div>
+    <div>
+      <div class="logo-title">Heat Batch NFT</div>
+      <div class="logo-sub">Manufacturing Traceability DPP</div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button id="switchBtn" onclick="switchAccount()" style="display:none;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#94a3b8;font-family:Inter,sans-serif;font-size:13px;font-weight:500;cursor:pointer;" title="Switch MetaMask account">⇄ Switch</button>
-      <button id="connectBtn" onclick="connectWallet()">🦊 Connect MetaMask</button>
-    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button id="switchBtn" onclick="switchAccount()">⇄ Switch</button>
+    <button id="connectBtn" onclick="connectWallet()">🦊 Connect MetaMask</button>
   </div>
 </header>
 
-<!-- HERO -->
-<main class="container">
-  <div class="hero">
-    <div class="hero-badge">
-      <span class="dot"></span>
-      Live on Ethereum Sepolia Testnet
-    </div>
-    <h1>Blockchain Digital<br/>Product Passport</h1>
-    <p>Tamper-proof lifecycle tracking for aerospace components — from investment casting through end-of-life, anchored on-chain as ERC-721 NFTs.</p>
+<!-- ── WALLET STATUS ──────────────────────────────── -->
+<div id="walletStatus" style="display:none;margin:16px 32px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 24px;display:none;align-items:center;gap:24px;flex-wrap:wrap;">
+  <div class="ws-item"><div class="ws-label">Address</div><div class="ws-value" id="wsAddr">—</div></div>
+  <div class="ws-item"><div class="ws-label">Network</div><div class="ws-value">Ethereum Sepolia</div></div>
+  <div class="ws-item"><div class="ws-label">Roles</div><div id="wsRoles" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;"></div></div>
+  <div id="noRoleWarn" style="display:none;margin-left:auto;padding:8px 14px;background:var(--red-dim);border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#f87171;">⚠️ No roles — connect deployer wallet to mint</div>
+</div>
 
-    <div class="info-bar">
-      <div class="info-chip"><span class="dot"></span>Contract: 0xc6e9D3...A5f8</div>
-      <div class="info-chip">⛓ Sepolia Testnet</div>
-      <div class="info-chip">🔑 ERC-721 + AccessControl</div>
-      <div class="info-chip">⚙️ Solidity 0.8.33</div>
-      <div class="info-chip">🌿 Carbon NFT v2</div>
+<!-- ── HERO ───────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-badge"><span class="dot"></span> Live on Ethereum Sepolia Testnet</div>
+  <h1>Heat Batch NFT<br>Traceability System</h1>
+  <p>Every manufacturing batch becomes an immutable NFT — process parameters, chemical composition, defect analysis, and quality scores stored permanently on-chain.</p>
+  <div class="stats-bar">
+    <div class="stat-chip"><strong id="statTotal">—</strong>Batches Minted</div>
+    <div class="stat-chip"><strong id="statClean">—</strong>Defect-Free</div>
+    <div class="stat-chip"><strong id="statAvgQ">—</strong>Avg Quality Score</div>
+    <div class="stat-chip" style="border-color:var(--border);">
+      <strong style="font-size:11px;color:var(--text-muted);">Contract</strong>
+      <span style="font-size:10px;font-family:var(--mono);color:var(--text-muted);" id="contractChip">Loading...</span>
     </div>
   </div>
+</div>
 
-  <!-- WALLET STATUS -->
-  <div id="walletStatus" style="display:none;">
-    <div class="status-item">
-      <span class="status-label">Connected Wallet</span>
-      <span class="status-value" id="walletAddr">—</span>
-    </div>
-    <div class="status-item">
-      <span class="status-label">Network</span>
-      <span class="status-value" id="networkName">—</span>
-    </div>
-    <div class="status-item">
-      <span class="status-label">Your Roles</span>
-      <div id="userRoles" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;"></div>
-    </div>
-    <div id="noRoleWarning" style="display:none;margin-left:auto;padding:10px 16px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;font-size:12px;color:#f87171;">
-      ⚠️ No roles — switch to deployer account to mint
-    </div>
+<!-- ── TOAST ──────────────────────────────────────── -->
+<div id="toastContainer"></div>
+
+<!-- ── MAIN ──────────────────────────────────────── -->
+<main>
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" id="tab-mint"      onclick="switchTab('mint')">🔥 Mint Batch</button>
+    <button class="tab-btn" id="tab-lookup"    onclick="switchTab('lookup')">🔍 Lookup</button>
   </div>
 
-  <!-- STATS -->
-  <div class="stats-grid" id="statsGrid">
-    <div class="stat-card">
-      <div class="stat-label">Token Name</div>
-      <div class="stat-value" id="statName">—</div>
-      <div class="stat-sub">ERC-721 NFT</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Symbol</div>
-      <div class="stat-value" id="statSymbol">—</div>
-      <div class="stat-sub">Token ticker</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Network</div>
-      <div class="stat-value">Sepolia</div>
-      <div class="stat-sub">Chain ID: 11155111</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Contract</div>
-      <div class="stat-value">Live ✅</div>
-      <div class="stat-sub" style="word-break:break-all;">0x2BD811...D3A1A</div>
-    </div>
-  </div>
-
-  <!-- TABS -->
-  <div class="tabs">
-    <button class="tab active" id="tab-lookup" onclick="switchTab('lookup')">🔍 Lookup Token</button>
-    <button class="tab" id="tab-mint" onclick="switchTab('mint')">⚙️ Mint Equipment</button>
-    <button class="tab" id="tab-part" onclick="switchTab('part')">🔩 Mint Part</button>
-    <button class="tab" id="tab-stage" onclick="switchTab('stage')">📊 Update Stage</button>
-    <button class="tab" id="tab-cert" onclick="switchTab('cert')">📜 Add Certification</button>
-    <button class="tab" id="tab-carbon" onclick="switchTab('carbon')" style="color:#34d399;border-color:rgba(16,185,129,0.3);">🌿 Carbon NFT</button>
-  </div>
-
-  <!-- PANEL: LOOKUP -->
-  <div class="panel active" id="panel-lookup">
-    <div class="card">
-      <div class="card-title">
-        <div class="icon" style="background:rgba(99,102,241,0.15);">🔍</div>
-        Token Lookup
-      </div>
-      <div class="card-desc">Query any token on-chain by its ID. View owner, lifecycle stage, IPFS metadata URI, parent and child relationships.</div>
-
-      <!-- Lifecycle visual -->
-      <div class="lifecycle-track" id="lifecycleTrack">
-        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc0">🏭</div><div class="lifecycle-label">Manu&shy;facturing</div></div>
-        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc1">🚢</div><div class="lifecycle-label">Supply Chain</div></div>
-        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc2">✈️</div><div class="lifecycle-label">Operation</div></div>
-        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc3">🔧</div><div class="lifecycle-label">Maintenance</div></div>
-        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc4">♻️</div><div class="lifecycle-label">End of Life</div></div>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Token ID</label>
-          <input class="form-input" id="lookupId" type="number" placeholder="e.g. 1" min="0" />
-        </div>
-        <div class="form-group" style="justify-content:flex-end;">
-          <button class="btn btn-primary" onclick="lookupToken()">🔍 Lookup Token</button>
-        </div>
-      </div>
-
-      <div class="result-box" id="lookupResult"></div>
-
-      <div class="token-card" id="tokenCard">
-        <div class="token-header">
-          <div>
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">TOKEN ID</div>
-            <div class="token-id" id="tcId">—</div>
-          </div>
-          <div class="stage-badge" id="tcStageBadge">—</div>
-        </div>
-        <div class="token-grid">
-          <div class="token-field"><div class="token-field-label">Owner</div><div class="token-field-value" id="tcOwner">—</div></div>
-          <div class="token-field"><div class="token-field-label">Parent Token</div><div class="token-field-value" id="tcParent">—</div></div>
-          <div class="token-field"><div class="token-field-label">Child Count</div><div class="token-field-value" id="tcChildren">—</div></div>
-          <div class="token-field"><div class="token-field-label">Type</div><div class="token-field-value" id="tcType">—</div></div>
-          <div class="token-field" style="grid-column:1/-1;"><div class="token-field-label">Metadata URI</div><div class="token-field-value" id="tcUri">—</div></div>
-        </div>
-        <div class="divider"></div>
-        <a id="tcEtherscan" href="#" target="_blank" class="btn btn-secondary" style="font-size:12px;">View on Etherscan ↗</a>
+  <!-- ══════════════════════════════════════════════════
+       PANEL: DASHBOARD
+  ══════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="dashboard-header">
+      <h2 style="font-size:18px;font-weight:700;">All Heat Batches</h2>
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Search by Heat Number (e.g. H001)" oninput="filterCards()" />
+        <button class="btn btn-secondary" onclick="searchByHeatNo()">Search</button>
+        <button class="btn btn-secondary" onclick="loadDashboard()">↻ Refresh</button>
       </div>
     </div>
+
+    <div id="dashboardLoading" style="text-align:center;padding:40px;color:var(--text-muted);">
+      <div class="spinner"></div><br>Loading batches from chain...
+    </div>
+    <div id="nftGrid" class="nft-grid" style="display:none;"></div>
+    <div id="dashboardEmpty" class="empty-state" style="display:none;">
+      <div class="icon">🏭</div>
+      <h3>No batches minted yet</h3>
+      <p>Connect your wallet and mint the first Heat Batch NFT</p>
+    </div>
   </div>
 
-  <!-- PANEL: MINT EQUIPMENT -->
+  <!-- ══════════════════════════════════════════════════
+       PANEL: MINT
+  ══════════════════════════════════════════════════ -->
   <div class="panel" id="panel-mint">
     <div class="card">
-      <div class="card-title">
-        <div class="icon" style="background:rgba(6,182,212,0.15);">⚙️</div>
-        Mint Equipment NFT
+      <div class="card-title"><div class="card-icon">🔥</div> Mint Heat Batch NFT</div>
+      <div class="card-desc">Record a complete manufacturing batch as an immutable ERC-721 NFT. All data is stored on-chain — no IPFS required.</div>
+
+      <!-- Basic Info -->
+      <div class="form-section">
+        <div class="form-section-title">Batch Identity</div>
+        <div class="form-grid">
+          <div class="fg">
+            <label>Heat Number *</label>
+            <input type="text" id="m_heatNo" placeholder="e.g. H001" />
+            <span class="hint">Must be unique across all minted tokens</span>
+          </div>
+          <div class="fg">
+            <label>Manufacturer *</label>
+            <input type="text" id="m_manufacturer" placeholder="e.g. Precision Foundry Ltd." />
+          </div>
+          <div class="fg">
+            <label>Quality Score (0–100) *</label>
+            <input type="number" id="m_qualityScore" placeholder="e.g. 92" min="0" max="100" />
+          </div>
+        </div>
       </div>
-      <div class="card-desc">Create a new equipment token representing a turbine, casting machine, or other top-level aerospace equipment. Requires FOUNDRY_ROLE or ADMIN_ROLE.</div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Recipient Address</label>
-          <input class="form-input" id="mintTo" placeholder="0x... (leave blank for your wallet)" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Equipment ID (Token ID)</label>
-          <input class="form-input" id="mintEqId" type="number" placeholder="e.g. 1" min="1" />
-          <span class="form-hint">Must be unique — use a new number</span>
-        </div>
-        <div class="form-group form-full">
-          <label class="form-label">Metadata URI (IPFS)</label>
-          <input class="form-input" id="mintUri" placeholder="ipfs://Qm... or https://..." />
-          <span class="form-hint">IPFS link to the equipment's JSON metadata</span>
+
+      <!-- Process Parameters -->
+      <div class="form-section">
+        <div class="form-section-title">Process Parameters</div>
+        <div class="form-grid">
+          <div class="fg">
+            <label>Pouring Temperature (°C)</label>
+            <input type="number" id="m_pouringTemp" placeholder="e.g. 692" />
+          </div>
+          <div class="fg">
+            <label>Injection Pressure (bar)</label>
+            <input type="number" id="m_injectionPressure" placeholder="e.g. 35" />
+          </div>
+          <div class="fg">
+            <label>Injection Time (sec)</label>
+            <input type="number" id="m_injectionTime" placeholder="e.g. 30" />
+          </div>
+          <div class="fg">
+            <label>Humidity (%RH)</label>
+            <input type="number" id="m_humidity" placeholder="e.g. 22" min="0" max="100" />
+          </div>
+          <div class="fg">
+            <label>Room Temperature (°C)</label>
+            <input type="number" id="m_roomTemp" placeholder="e.g. 25" />
+          </div>
+          <div class="fg">
+            <label>Process Duration (min)</label>
+            <input type="number" id="m_processDuration" placeholder="e.g. 45" />
+          </div>
         </div>
       </div>
-      <div style="margin-top:20px;">
-        <button class="btn btn-accent" onclick="mintEquipment()">⚙️ Mint Equipment</button>
+
+      <!-- Chemical Composition -->
+      <div class="form-section">
+        <div class="form-section-title">Chemical Composition (%)</div>
+        <div class="hint" style="margin-bottom:12px;">Enter percentages with up to 2 decimal places (e.g. 7.20 for Si)</div>
+        <div class="form-grid">
+          <div class="fg"><label>Silicon (Si %)</label><input type="number" id="m_si" placeholder="e.g. 7.20" step="0.01" /></div>
+          <div class="fg"><label>Iron (Fe %)</label><input type="number" id="m_fe" placeholder="e.g. 0.60" step="0.01" /></div>
+          <div class="fg"><label>Manganese (Mn %)</label><input type="number" id="m_mn" placeholder="e.g. 0.30" step="0.01" /></div>
+          <div class="fg"><label>Magnesium (Mg %)</label><input type="number" id="m_mg" placeholder="e.g. 0.30" step="0.01" /></div>
+          <div class="fg"><label>Copper (Cu %)</label><input type="number" id="m_cu" placeholder="e.g. 0.10" step="0.01" /></div>
+          <div class="fg"><label>Zinc (Zn %)</label><input type="number" id="m_zn" placeholder="e.g. 0.10" step="0.01" /></div>
+          <div class="fg"><label>Titanium (Ti %)</label><input type="number" id="m_ti" placeholder="e.g. 0.10" step="0.01" /></div>
+          <div class="fg"><label>Aluminium (Al %)</label><input type="number" id="m_al" placeholder="e.g. 91.20" step="0.01" /></div>
+        </div>
+      </div>
+
+      <!-- Defects -->
+      <div class="form-section">
+        <div class="form-section-title">Defect Information</div>
+        <div class="hint" style="margin-bottom:12px;">Check all defects detected in this batch</div>
+        <div class="checkbox-row">
+          <label class="checkbox-item"><input type="checkbox" id="m_distortion" /> Distortion</label>
+          <label class="checkbox-item"><input type="checkbox" id="m_roughSurface" /> Rough Surface</label>
+          <label class="checkbox-item"><input type="checkbox" id="m_shrinkage" /> Shrinkage</label>
+          <label class="checkbox-item"><input type="checkbox" id="m_slagInclusion" /> Slag Inclusion</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="mintHeatBatch()">🔥 Mint Heat Batch NFT</button>
+        <button class="btn btn-secondary" onclick="fillSampleData()">📋 Fill Sample Data</button>
+        <button class="btn btn-secondary" onclick="clearForm()">✕ Clear</button>
       </div>
       <div class="result-box" id="mintResult"></div>
     </div>
   </div>
 
-  <!-- PANEL: MINT PART -->
-  <div class="panel" id="panel-part">
+  <!-- ══════════════════════════════════════════════════
+       PANEL: LOOKUP
+  ══════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-lookup">
     <div class="card">
-      <div class="card-title">
-        <div class="icon" style="background:rgba(139,92,246,0.15);">🔩</div>
-        Mint Part NFT
-      </div>
-      <div class="card-desc">Create a part token (e.g. turbine blade, nozzle) linked to a parent equipment token. Parts inherit the equipment's lifecycle context.</div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Recipient Address</label>
-          <input class="form-input" id="partTo" placeholder="0x... (leave blank for your wallet)" />
+      <div class="card-title"><div class="card-icon">🔍</div> Lookup Heat Batch</div>
+      <div class="card-desc">Search by Heat Number or Token ID to retrieve the complete on-chain batch record.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:600px;">
+        <div class="fg">
+          <label>Search by Heat Number</label>
+          <input type="text" id="lookupHeatNo" placeholder="e.g. H001" />
+          <button class="btn btn-primary" style="margin-top:8px;" onclick="lookupByHeatNo()">Search</button>
         </div>
-        <div class="form-group">
-          <label class="form-label">Part ID (Token ID)</label>
-          <input class="form-input" id="partId" type="number" placeholder="e.g. 2" min="1" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Parent Equipment ID</label>
-          <input class="form-input" id="partParentId" type="number" placeholder="e.g. 1" min="1" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Metadata URI</label>
-          <input class="form-input" id="partUri" placeholder="ipfs://Qm..." />
+        <div class="fg">
+          <label>Search by Token ID</label>
+          <input type="number" id="lookupTokenId" placeholder="e.g. 1" min="1" />
+          <button class="btn btn-teal" style="margin-top:8px;" onclick="lookupByTokenId()">Lookup</button>
         </div>
       </div>
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" onclick="mintPart()">🔩 Mint Part</button>
-      </div>
-      <div class="result-box" id="partResult"></div>
+      <div class="result-box" id="lookupResult"></div>
     </div>
   </div>
-
-  <!-- PANEL: UPDATE STAGE -->
-  <div class="panel" id="panel-stage">
-    <div class="card">
-      <div class="card-title">
-        <div class="icon" style="background:rgba(245,158,11,0.15);">📊</div>
-        Update Lifecycle Stage
-      </div>
-      <div class="card-desc">Advance a token to the next lifecycle stage. Each transition is permanently recorded on-chain with an IOTA Notarization hash.</div>
-
-      <div class="lifecycle-track" style="margin-bottom:24px;">
-        <div class="lifecycle-step"><div class="lifecycle-dot done">🏭</div><div class="lifecycle-label">Manufacturing</div></div>
-        <div class="lifecycle-step"><div class="lifecycle-dot">🚢</div><div class="lifecycle-label">Supply Chain</div></div>
-        <div class="lifecycle-step"><div class="lifecycle-dot">✈️</div><div class="lifecycle-label">Operation</div></div>
-        <div class="lifecycle-step"><div class="lifecycle-dot">🔧</div><div class="lifecycle-label">Maintenance</div></div>
-        <div class="lifecycle-step"><div class="lifecycle-dot">♻️</div><div class="lifecycle-label">End of Life</div></div>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Token ID</label>
-          <input class="form-input" id="stageTokenId" type="number" placeholder="e.g. 1" min="0" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">New Lifecycle Stage</label>
-          <select class="form-select" id="stageSelect">
-            <option value="0">🏭 Manufacturing</option>
-            <option value="1">🚢 Supply Chain</option>
-            <option value="2">✈️ Operation</option>
-            <option value="3">🔧 Maintenance</option>
-            <option value="4">♻️ End of Life</option>
-          </select>
-        </div>
-        <div class="form-group form-full">
-          <label class="form-label">IOTA Notarization Hash (optional)</label>
-          <input class="form-input" id="stageHash" placeholder="0x0000... (auto-filled if empty)" />
-          <span class="form-hint">Leave blank to auto-generate a placeholder hash</span>
-        </div>
-      </div>
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" onclick="updateStage()">📊 Update Stage</button>
-      </div>
-      <div class="result-box" id="stageResult"></div>
-    </div>
-  </div>
-
-  <!-- PANEL: CERTIFICATION -->
-  <div class="panel" id="panel-cert">
-    <div class="card">
-      <div class="card-title">
-        <div class="icon" style="background:rgba(16,185,129,0.15);">📜</div>
-        Add Certification
-      </div>
-      <div class="card-desc">Attach an aerospace certification (NDT, X-Ray, Heat Treatment, etc.) to a token, linking to the IPFS document and IOTA Notarization hash.</div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Token ID</label>
-          <input class="form-input" id="certTokenId" type="number" placeholder="e.g. 1" min="0" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Certification Type</label>
-          <select class="form-select" id="certType">
-            <option value="NDT">NDT — Non-Destructive Testing</option>
-            <option value="X-Ray">X-Ray Inspection</option>
-            <option value="HeatTreatment">Heat Treatment</option>
-            <option value="DimensionalCheck">Dimensional Check</option>
-            <option value="MaterialTest">Material Test</option>
-            <option value="AS9100">AS9100 Compliance</option>
-            <option value="FAA">FAA Approval</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Document Hash (IPFS)</label>
-          <input class="form-input" id="certDocHash" placeholder="ipfs://Qm..." />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Notarization Hash</label>
-          <input class="form-input" id="certNotHash" placeholder="0x000... (auto if blank)" />
-        </div>
-      </div>
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" onclick="addCertification()">📜 Add Certification</button>
-      </div>
-      <div class="result-box" id="certResult"></div>
-    </div>
-  </div>
-
-  <!-- PANEL: CARBON NFT -->
-  <div class="panel" id="panel-carbon">
-    <div class="card" style="border-color:rgba(16,185,129,0.2);">
-      <div class="card-title">
-        <div class="icon" style="background:rgba(16,185,129,0.15);">🌿</div>
-        Mint Carbon NFT
-        <span style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:100px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#34d399;font-weight:600;">v2 NEW</span>
-      </div>
-      <div class="card-desc">Record the energy consumption and CO₂ footprint of a manufacturing batch as an immutable on-chain Carbon NFT. Requires <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;">CARBON_REPORTER_ROLE</code> or ADMIN.</div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Carbon Token ID</label>
-          <input class="form-input" id="carbonTokenId" type="number" placeholder="e.g. 100" min="1" />
-          <span class="form-hint">Must be unique — different from equipment/part IDs</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Linked Equipment ID</label>
-          <input class="form-input" id="carbonLinkedId" type="number" placeholder="e.g. 1 (0 for standalone)" min="0" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Energy Consumed (Wh)</label>
-          <input class="form-input" id="carbonEnergy" type="number" placeholder="e.g. 120000 = 120 kWh" min="0" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">CO₂ Emitted (grams)</label>
-          <input class="form-input" id="carbonCO2" type="number" placeholder="e.g. 32000 = 32 kg" min="0" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Sustainability Score (0–100)</label>
-          <input class="form-input" id="carbonScore" type="number" placeholder="e.g. 72" min="0" max="100" />
-          <span class="form-hint">100 = fully green ♻️</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Reporting Period</label>
-          <input class="form-input" id="carbonPeriod" placeholder="e.g. Batch-B101 or 2024-Q1" />
-        </div>
-        <div class="form-group form-full">
-          <label class="form-label">Metadata URI (IPFS)</label>
-          <input class="form-input" id="carbonUri" placeholder="ipfs://Qm... or leave blank" />
-        </div>
-      </div>
-      <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
-        <button class="btn" style="background:linear-gradient(135deg,#059669,#047857);color:white;box-shadow:0 4px 16px rgba(16,185,129,0.3);" onclick="mintCarbonNFT()">🌿 Mint Carbon NFT</button>
-        <button class="btn btn-secondary" onclick="lookupCarbonNFT()">🔍 Lookup Carbon Data</button>
-      </div>
-      <div class="result-box" id="carbonResult"></div>
-
-      <!-- Carbon data card -->
-      <div id="carbonDataCard" style="display:none;margin-top:16px;background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(6,182,212,0.05));border:1px solid rgba(16,185,129,0.3);border-radius:16px;padding:24px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">CARBON NFT DATA</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="token-field"><div class="token-field-label">⚡ Energy</div><div class="token-field-value" id="cdEnergy">—</div></div>
-          <div class="token-field"><div class="token-field-label">💨 CO₂ Emitted</div><div class="token-field-value" id="cdCO2">—</div></div>
-          <div class="token-field"><div class="token-field-label">🌿 Sustainability</div><div class="token-field-value" id="cdScore">—</div></div>
-          <div class="token-field"><div class="token-field-label">📅 Period</div><div class="token-field-value" id="cdPeriod">—</div></div>
-          <div class="token-field"><div class="token-field-label">🔗 Linked Equipment</div><div class="token-field-value" id="cdLinked">—</div></div>
-          <div class="token-field"><div class="token-field-label">🕐 Last Updated</div><div class="token-field-value" id="cdUpdated">—</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </main>
 
-<!-- FOOTER -->
-<footer>
-  <div class="container">
-    <p>
-      IOTA Manufacturing DPP •
-      <a href="https://sepolia.etherscan.io/address/0x2BD811B92B0543647C3837cBd662B07b0EcD3A1A" target="_blank">Contract on Etherscan</a> •
-      <a href="https://github.com/Dhruv4848l/Iota-Project-Phase-4" target="_blank">GitHub Repository</a>
-    </p>
+<!-- ══════════════════════════════════════════════════
+     DETAIL MODAL
+══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modalContent"></div>
   </div>
-</footer>
+</div>
 
-<!-- TOAST -->
-<div id="toast"></div>
+<!-- ── FOOTER ─────────────────────────────────────── -->
+<footer style="text-align:center;padding:32px;color:var(--text-muted);font-size:12px;border-top:1px solid var(--border2);position:relative;z-index:1;">
+  Heat Batch NFT · Ethereum Sepolia Testnet · ERC-721 On-Chain Metadata
+  <br><span id="footerContract" style="font-family:var(--mono);font-size:11px;"></span>
+</footer>
 
 <script>
   // ─── CONFIG ───────────────────────────────────────────────────────────
-  const CONTRACT_ADDRESS = "0xc6e9D390Ba802079eb1e7d4399F4d38daF97A5f8"; // v2 — with Carbon NFT
-  const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111
-
-  const STAGES = ["Manufacturing","Supply Chain","Operation","Maintenance","End of Life"];
-  const STAGE_EMOJIS = ["🏭","🚢","✈️","🔧","♻️"];
+  const CONTRACT_ADDRESS = "0xE126FB587eC8612A0CE4ad95F0A720D705AFB070"; // HeatBatchNFT — Sepolia
+  const SEPOLIA_CHAIN_ID = "0xaa36a7";
+  const RPC = "https://sepolia.drpc.org";
 
   const ABI = [
+    "function mintHeatBatch(address to, string heatNo, string manufacturer, tuple(uint16,uint16,uint16,uint8,uint8,uint16) pp, tuple(uint16,uint16,uint16,uint16,uint16,uint16,uint16,uint16) cc, tuple(bool,bool,bool,bool) di, uint8 qualityScore) returns (uint256)",
+    "function getHeatBatch(uint256 tokenId) view returns (tuple(string heatNo, uint256 mintTimestamp, string manufacturer, tuple(uint16,uint16,uint16,uint8,uint8,uint16) processParams, tuple(uint16,uint16,uint16,uint16,uint16,uint16,uint16,uint16) chemComp, tuple(bool,bool,bool,bool) defects, uint8 qualityScore))",
+    "function getTokenIdByHeatNo(string heatNo) view returns (uint256)",
+    "function totalMinted() view returns (uint256)",
+    "function getAllTokenIds() view returns (uint256[])",
+    "function getRecentTokenIds(uint256 count) view returns (uint256[])",
+    "function getRoles(address account) view returns (bool foundry, bool admin)",
+    "function exists(uint256 tokenId) view returns (bool)",
+    "function ownerOf(uint256 tokenId) view returns (address)",
+    "function tokenURI(uint256 tokenId) view returns (string)",
     "function name() view returns (string)",
     "function symbol() view returns (string)",
-    "function mintEquipment(address to, uint256 equipmentId, string initialURI)",
-    "function mintPart(address to, uint256 partId, uint256 equipmentId, string initialURI)",
-    "function mintCarbonNFT(address to, uint256 tokenId, uint256 linkedEquipmentId, uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, string reportingPeriod, string initialURI)",
-    "function updateCarbonData(uint256 tokenId, uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, bytes32 notarizationHash)",
-    "function getCarbonData(uint256 tokenId) view returns (uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, string reportingPeriod, uint256 linkedEquipmentId, uint256 lastUpdated)",
-    "function getTokenInfo(uint256 tokenId) view returns (address owner, uint8 stage, string uri, uint256 parent, uint256 childCount)",
-    "function updateLifecycleStage(uint256 tokenId, uint8 newStage, bytes32 notarizationHash)",
-    "function addCertification(uint256 tokenId, string certType, string documentHash, bytes32 notarizationHash)",
-    "function recordMaintenance(uint256 tokenId, string details, bytes32 notarizationHash)",
-    "function getRoles(address account) view returns (bool foundry, bool machining, bool oem, bool mro, bool admin, bool carbonReporter)",
-    "function hasRole(bytes32 role, address account) view returns (bool)",
-    "function exists(uint256 tokenId) view returns (bool)",
-    "function getChildCount(uint256 equipmentId) view returns (uint256)",
-    "function parentOf(uint256) view returns (uint256)",
-    "function tokenType(uint256) view returns (uint8)"
+    "event HeatBatchMinted(uint256 indexed tokenId, string heatNo, string manufacturer, uint8 qualityScore, uint256 mintTimestamp)"
   ];
 
   // ─── STATE ────────────────────────────────────────────────────────────
-  let provider, signer, contract, userAddress;
+  let provider, signer, contract, publicContract, userAddress;
+  let dashboardData = [];
 
   // ─── INIT ─────────────────────────────────────────────────────────────
-  window.addEventListener('load', async () => {
-    // Load read-only data from public RPC
+  document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('contractChip').textContent = CONTRACT_ADDRESS.slice(0,8) + '...' + CONTRACT_ADDRESS.slice(-4);
+    document.getElementById('footerContract').textContent = CONTRACT_ADDRESS;
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', async (accs) => {
+        if (accs.length === 0) {
+          resetWallet();
+        } else {
+          showToast('Account changed — reconnecting...', 'info');
+          await connectWallet();
+        }
+      });
+      window.ethereum.on('chainChanged', () => window.location.reload());
+    }
+
+    // load public data
     try {
-      const pub = new ethers.JsonRpcProvider("https://sepolia.drpc.org");
-      const rc = new ethers.Contract(CONTRACT_ADDRESS, ABI, pub);
-      const [name, symbol] = await Promise.all([rc.name(), rc.symbol()]);
-      document.getElementById('statName').textContent = name;
-      document.getElementById('statSymbol').textContent = symbol;
-    } catch(e) { console.warn('Could not load contract data:', e); }
+      publicContract = new ethers.Contract(
+        CONTRACT_ADDRESS, ABI,
+        new ethers.JsonRpcProvider(RPC)
+      );
+      await loadStats();
+      await loadDashboard();
+    } catch(e) {
+      console.warn('Public load failed:', e.message);
+    }
   });
 
   // ─── WALLET ───────────────────────────────────────────────────────────
-  // Auto-detect account switch in MetaMask
-  if (window.ethereum) {
-    window.ethereum.on('accountsChanged', async (accounts) => {
-      if (accounts.length === 0) {
-        // Disconnected
-        document.getElementById('connectBtn').textContent = '🦊 Connect MetaMask';
-        document.getElementById('connectBtn').classList.remove('connected');
-        document.getElementById('switchBtn').style.display = 'none';
-        document.getElementById('walletStatus').style.display = 'none';
-        signer = null; contract = null; userAddress = null;
-        showToast('Wallet disconnected', 'info');
-      } else {
-        // Account changed — reconnect silently
-        showToast('Account changed — reconnecting...', 'info');
-        await connectWallet();
+  async function connectWallet() {
+    if (!window.ethereum) return showToast('MetaMask not found', 'error');
+    try {
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      if (chainId !== SEPOLIA_CHAIN_ID) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: SEPOLIA_CHAIN_ID }]
+          });
+        } catch { showToast('Please switch to Sepolia in MetaMask', 'error'); return; }
       }
-    });
-    window.ethereum.on('chainChanged', () => window.location.reload());
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      provider    = new ethers.BrowserProvider(window.ethereum);
+      signer      = await provider.getSigner();
+      userAddress = await signer.getAddress();
+      contract    = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+      const btn = document.getElementById('connectBtn');
+      btn.textContent = `✅ ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+      btn.classList.add('connected');
+      document.getElementById('switchBtn').style.display = 'block';
+
+      document.getElementById('wsAddr').textContent = userAddress;
+      const ws = document.getElementById('walletStatus');
+      ws.style.display = 'flex';
+
+      const [isFoundry, isAdmin] = await contract.getRoles(userAddress);
+      const rolesEl = document.getElementById('wsRoles');
+      rolesEl.innerHTML = '';
+      if (isAdmin)   rolesEl.innerHTML += '<span class="role-chip admin">ADMIN</span>';
+      if (isFoundry) rolesEl.innerHTML += '<span class="role-chip foundry">FOUNDRY</span>';
+      if (!isAdmin && !isFoundry) {
+        rolesEl.innerHTML = '<span class="role-chip">No roles</span>';
+        document.getElementById('noRoleWarn').style.display = 'block';
+      } else {
+        document.getElementById('noRoleWarn').style.display = 'none';
+      }
+
+      showToast(`Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`, 'success');
+      await loadStats();
+      await loadDashboard();
+    } catch(e) {
+      showToast(e.message, 'error');
+    }
   }
 
   async function switchAccount() {
@@ -992,259 +700,380 @@
         method: 'wallet_requestPermissions',
         params: [{ eth_accounts: {} }]
       });
-      // accountsChanged event fires automatically after this
-    } catch(e) {
-      showToast('Account switch cancelled', 'info');
-    }
+    } catch { showToast('Account switch cancelled', 'info'); }
   }
 
-  async function connectWallet() {
-    if (!window.ethereum) return showToast("MetaMask not found. Please install it.", "error");
+  function resetWallet() {
+    document.getElementById('connectBtn').textContent = '🦊 Connect MetaMask';
+    document.getElementById('connectBtn').classList.remove('connected');
+    document.getElementById('switchBtn').style.display = 'none';
+    document.getElementById('walletStatus').style.display = 'none';
+    signer = null; contract = null; userAddress = null;
+  }
+
+  // ─── STATS ────────────────────────────────────────────────────────────
+  async function loadStats() {
     try {
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      if (chainId !== SEPOLIA_CHAIN_ID) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: SEPOLIA_CHAIN_ID }]
-          });
-        } catch(e) {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{ chainId: SEPOLIA_CHAIN_ID, chainName: 'Ethereum Sepolia', rpcUrls: ['https://sepolia.drpc.org'], nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://sepolia.etherscan.io'] }]
-          });
+      const rc = publicContract || contract;
+      if (!rc) return;
+      const total = await rc.totalMinted();
+      document.getElementById('statTotal').textContent = total.toString();
+
+      // Load recent to compute stats
+      if (Number(total) > 0) {
+        const ids = await rc.getRecentTokenIds(Math.min(Number(total), 50));
+        let clean = 0, totalQ = 0;
+        for (const id of ids) {
+          const b = await rc.getHeatBatch(id);
+          const d = b.defects;
+          if (!d[0] && !d[1] && !d[2] && !d[3]) clean++;
+          totalQ += Number(b.qualityScore);
         }
+        document.getElementById('statClean').textContent = clean;
+        document.getElementById('statAvgQ').textContent  = (totalQ / ids.length).toFixed(0);
       }
-      provider = new ethers.BrowserProvider(window.ethereum);
-      signer = await provider.getSigner();
-      userAddress = await signer.getAddress();
-      contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    } catch(e) { console.warn('Stats error:', e.message); }
+  }
 
-      // Update UI
-      const btn = document.getElementById('connectBtn');
-      btn.textContent = `✅ ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-      btn.classList.add('connected');
-      document.getElementById('switchBtn').style.display = 'block';
+  // ─── DASHBOARD ────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    const loading = document.getElementById('dashboardLoading');
+    const grid    = document.getElementById('nftGrid');
+    const empty   = document.getElementById('dashboardEmpty');
 
-      document.getElementById('walletAddr').textContent = userAddress;
-      document.getElementById('networkName').textContent = 'Ethereum Sepolia';
-      document.getElementById('walletStatus').style.display = 'flex';
+    loading.style.display = 'block'; grid.style.display = 'none'; empty.style.display = 'none';
 
-      // Load roles
-      const roles = await contract.getRoles(userAddress);
-      const rolesEl = document.getElementById('userRoles');
-      const hasAnyRole = roles.admin || roles.foundry || roles.oem || roles.mro || roles.machining || roles.carbonReporter;
-      rolesEl.innerHTML = '';
-      if (roles.admin)          rolesEl.innerHTML += '<span class="role-badge admin">ADMIN</span>';
-      if (roles.foundry)        rolesEl.innerHTML += '<span class="role-badge foundry">FOUNDRY</span>';
-      if (roles.oem)            rolesEl.innerHTML += '<span class="role-badge oem">OEM</span>';
-      if (roles.mro)            rolesEl.innerHTML += '<span class="role-badge mro">MRO</span>';
-      if (roles.carbonReporter) rolesEl.innerHTML += '<span class="role-badge" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:#34d399;">CARBON_REPORTER</span>';
-      if (!hasAnyRole) {
-        rolesEl.innerHTML = '<span class="role-badge" style="color:var(--text-muted);">No roles assigned</span>';
-        document.getElementById('noRoleWarning').style.display = 'block';
-      } else {
-        document.getElementById('noRoleWarning').style.display = 'none';
+    try {
+      const rc = publicContract || contract;
+      if (!rc) { loading.style.display = 'none'; empty.style.display = 'block'; return; }
+
+      const total = await rc.totalMinted();
+      if (Number(total) === 0) {
+        loading.style.display = 'none'; empty.style.display = 'block'; return;
       }
 
-      showToast(`Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`, "success");
+      const ids = await rc.getAllTokenIds();
+      dashboardData = [];
+      const batches = await Promise.all(ids.map(async id => {
+        const b = await rc.getHeatBatch(id);
+        const owner = await rc.ownerOf(id);
+        return { tokenId: Number(id), batch: b, owner };
+      }));
+
+      // Reverse for newest first
+      dashboardData = batches.reverse();
+      renderCards(dashboardData);
+      loading.style.display = 'none';
+      grid.style.display = 'grid';
     } catch(e) {
-      showToast(e.message || "Connection failed", "error");
+      loading.style.display = 'none';
+      empty.style.display = 'block';
+      console.warn('Dashboard load error:', e.message);
     }
   }
 
-  // ─── TABS ─────────────────────────────────────────────────────────────
-  function switchTab(name) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById(`tab-${name}`).classList.add('active');
-    document.getElementById(`panel-${name}`).classList.add('active');
+  function renderCards(items) {
+    const grid = document.getElementById('nftGrid');
+    if (items.length === 0) {
+      grid.style.display = 'none';
+      document.getElementById('dashboardEmpty').style.display = 'block';
+      return;
+    }
+    document.getElementById('dashboardEmpty').style.display = 'none';
+    grid.style.display = 'grid';
+    grid.innerHTML = items.map(({ tokenId, batch, owner }) => {
+      const b  = batch;
+      const q  = Number(b.qualityScore);
+      const qc = q >= 80 ? 'q-high' : q >= 60 ? 'q-medium' : 'q-low';
+      const d  = b.defects;
+      const hasDefect = d[0] || d[1] || d[2] || d[3];
+      const ts = new Date(Number(b.mintTimestamp) * 1000).toLocaleDateString();
+      const pp = b.processParams;
+      return `
+        <div class="nft-card" onclick="showDetail(${tokenId})">
+          <div class="nft-card-header">
+            <div>
+              <div class="nft-heat-no">#${b.heatNo}</div>
+              <div class="nft-token-id">Token ID: ${tokenId}</div>
+            </div>
+            <div class="quality-badge ${qc}">${q}/100</div>
+          </div>
+          <div class="nft-meta">
+            <div class="nft-meta-item"><div class="label">Manufacturer</div><div class="value">${b.manufacturer}</div></div>
+            <div class="nft-meta-item"><div class="label">Minted</div><div class="value">${ts}</div></div>
+            <div class="nft-meta-item"><div class="label">Pouring Temp</div><div class="value">${pp[0]}°C</div></div>
+            <div class="nft-meta-item"><div class="label">Humidity</div><div class="value">${pp[3]}%</div></div>
+          </div>
+          <div class="defect-row">
+            <span class="defect-chip ${d[0]?'bad':'good'}">${d[0]?'⚠ Distortion':'✓ No Distortion'}</span>
+            <span class="defect-chip ${d[1]?'bad':'good'}">${d[1]?'⚠ Rough Surface':'✓ Smooth'}</span>
+            <span class="defect-chip ${d[2]?'bad':'good'}">${d[2]?'⚠ Shrinkage':'✓ No Shrinkage'}</span>
+            <span class="defect-chip ${d[3]?'bad':'good'}">${d[3]?'⚠ Slag':'✓ No Slag'}</span>
+          </div>
+          <div class="nft-card-footer">👤 ${owner.slice(0,10)}...${owner.slice(-6)}</div>
+        </div>`;
+    }).join('');
   }
 
-  // ─── LOOKUP TOKEN ─────────────────────────────────────────────────────
-  async function lookupToken() {
-    const id = document.getElementById('lookupId').value.trim();
-    if (!id) return showResult('lookupResult', 'Please enter a token ID', 'error');
+  function filterCards() {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (!q) { renderCards(dashboardData); return; }
+    const filtered = dashboardData.filter(({ batch }) =>
+      batch.heatNo.toLowerCase().includes(q) ||
+      batch.manufacturer.toLowerCase().includes(q)
+    );
+    renderCards(filtered);
+  }
 
-    showResult('lookupResult', '⏳ Loading token data...', 'loading');
-    document.getElementById('tokenCard').style.display = 'none';
+  async function searchByHeatNo() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (!q) { renderCards(dashboardData); return; }
+    try {
+      const rc = publicContract || contract;
+      if (!rc) return;
+      const tokenId = await rc.getTokenIdByHeatNo(q);
+      if (Number(tokenId) === 0) { showToast(`Heat number "${q}" not found`, 'error'); return; }
+      showDetail(Number(tokenId));
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+
+  // ─── DETAIL MODAL ─────────────────────────────────────────────────────
+  async function showDetail(tokenId) {
+    const modal = document.getElementById('detailModal');
+    const content = document.getElementById('modalContent');
+    content.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div><br>Loading...</div>';
+    modal.classList.add('open');
 
     try {
-      const pub = new ethers.JsonRpcProvider("https://sepolia.drpc.org");
-      const rc = new ethers.Contract(CONTRACT_ADDRESS, ABI, pub);
-      const exists = await rc.exists(BigInt(id));
-      if (!exists) return showResult('lookupResult', `❌ Token #${id} does not exist`, 'error');
+      const rc = publicContract || contract;
+      const b  = await rc.getHeatBatch(tokenId);
+      const owner = await rc.ownerOf(tokenId);
+      const uri = await rc.tokenURI(tokenId);
+      const q   = Number(b.qualityScore);
+      const qc  = q >= 80 ? 'q-high' : q >= 60 ? 'q-medium' : 'q-low';
+      const pp  = b.processParams;
+      const cc  = b.chemComp;
+      const d   = b.defects;
+      const ts  = new Date(Number(b.mintTimestamp) * 1000).toLocaleString();
 
-      const info = await rc.getTokenInfo(BigInt(id));
-      const [owner, stage, uri, parent, childCount] = [info[0], Number(info[1]), info[2], Number(info[3]), Number(info[4])];
+      // Decode base64 URI
+      let metadata = {};
+      try {
+        const base64 = uri.replace('data:application/json;base64,', '');
+        metadata = JSON.parse(atob(base64));
+      } catch {}
 
-      // Update lifecycle track
-      for (let i = 0; i <= 4; i++) {
-        const dot = document.getElementById(`lc${i}`);
-        dot.classList.remove('active', 'done');
-        if (i < stage) dot.classList.add('done');
-        if (i === stage) dot.classList.add('active');
-      }
+      // Max Al for chart scaling (usually ~90%)
+      const chemVals = [
+        { el:'Si', val:Number(cc[0])/100 },
+        { el:'Fe', val:Number(cc[1])/100 },
+        { el:'Mn', val:Number(cc[2])/100 },
+        { el:'Mg', val:Number(cc[3])/100 },
+        { el:'Cu', val:Number(cc[4])/100 },
+        { el:'Zn', val:Number(cc[5])/100 },
+        { el:'Ti', val:Number(cc[6])/100 },
+        { el:'Al', val:Number(cc[7])/100 },
+      ];
+      const maxVal = Math.max(...chemVals.map(c => c.val));
 
-      // Update token card
-      document.getElementById('tcId').textContent = `#${id}`;
-      document.getElementById('tcOwner').textContent = owner;
-      document.getElementById('tcParent').textContent = parent === 0 ? 'None (root equipment)' : `#${parent}`;
-      document.getElementById('tcChildren').textContent = childCount;
-      document.getElementById('tcType').textContent = parent === 0 ? '⚙️ Equipment' : '🔩 Part';
-      document.getElementById('tcUri').textContent = uri || 'No URI set';
+      const chemBars = chemVals.map(c => `
+        <div class="chem-bar-wrap">
+          <div class="chem-element">${c.el} <span>${c.val.toFixed(2)}%</span></div>
+          <div class="chem-bar-track">
+            <div class="chem-bar-fill" style="width:${(c.val/maxVal*100).toFixed(1)}%"></div>
+          </div>
+        </div>`).join('');
 
-      const stageNames = STAGE_EMOJIS[stage] + ' ' + STAGES[stage];
-      const stageBadge = document.getElementById('tcStageBadge');
-      stageBadge.textContent = stageNames;
-      stageBadge.className = `stage-badge stage-${stage}`;
+      content.innerHTML = `
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">HEAT BATCH NFT · TOKEN #${tokenId}</div>
+            <div style="font-size:28px;font-weight:800;font-family:var(--mono);color:var(--green);">#${b.heatNo}</div>
+            <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">${b.manufacturer}</div>
+          </div>
+          <div class="quality-badge ${qc}" style="font-size:24px;padding:12px 20px;">${q}<span style="font-size:14px;">/100</span></div>
+        </div>
 
-      document.getElementById('tcEtherscan').href = `https://sepolia.etherscan.io/token/${CONTRACT_ADDRESS}?a=${id}`;
-      document.getElementById('tokenCard').style.display = 'block';
-      showResult('lookupResult', `✅ Token #${id} found — Stage: ${STAGES[stage]}`, 'success');
+        <!-- Lifecycle Timeline -->
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px;">Lifecycle</div>
+        <div class="timeline">
+          <div class="tl-step"><div class="tl-dot done">🏭</div><div class="tl-label done">Manufacturing</div></div>
+          <div class="tl-line done"></div>
+          <div class="tl-step"><div class="tl-dot done">🔬</div><div class="tl-label done">Inspection</div></div>
+          <div class="tl-line done"></div>
+          <div class="tl-step"><div class="tl-dot active">🔥</div><div class="tl-label active">NFT Minted</div></div>
+          <div class="tl-line"></div>
+          <div class="tl-step"><div class="tl-dot">✅</div><div class="tl-label">Verified</div></div>
+        </div>
+
+        <!-- Process Parameters -->
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px;margin-top:20px;">Process Parameters</div>
+        <div class="detail-grid">
+          <div class="detail-field"><div class="detail-label">Pouring Temperature</div><div class="detail-value">${pp[0]} °C</div></div>
+          <div class="detail-field"><div class="detail-label">Injection Pressure</div><div class="detail-value">${pp[1]} bar</div></div>
+          <div class="detail-field"><div class="detail-label">Injection Time</div><div class="detail-value">${pp[2]} sec</div></div>
+          <div class="detail-field"><div class="detail-label">Humidity</div><div class="detail-value">${pp[3]} %RH</div></div>
+          <div class="detail-field"><div class="detail-label">Room Temperature</div><div class="detail-value">${pp[4]} °C</div></div>
+          <div class="detail-field"><div class="detail-label">Process Duration</div><div class="detail-value">${pp[5]} min</div></div>
+        </div>
+
+        <!-- Chemical Composition -->
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:12px;margin-top:20px;">Chemical Composition</div>
+        <div class="chem-grid">${chemBars}</div>
+
+        <!-- Defects -->
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:12px;margin-top:20px;">Defect Analysis</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="padding:12px 16px;border-radius:10px;background:${d[0]?'var(--red-dim)':'var(--green-dim)'};border:1px solid ${d[0]?'rgba(239,68,68,.3)':'rgba(16,185,129,.3)'};">
+            <div style="font-size:10px;color:var(--text-muted);">Distortion</div>
+            <div style="font-size:16px;font-weight:700;color:${d[0]?'#f87171':'#34d399'}">${d[0]?'YES':'No'}</div>
+          </div>
+          <div style="padding:12px 16px;border-radius:10px;background:${d[1]?'var(--red-dim)':'var(--green-dim)'};border:1px solid ${d[1]?'rgba(239,68,68,.3)':'rgba(16,185,129,.3)'};">
+            <div style="font-size:10px;color:var(--text-muted);">Rough Surface</div>
+            <div style="font-size:16px;font-weight:700;color:${d[1]?'#f87171':'#34d399'}">${d[1]?'YES':'No'}</div>
+          </div>
+          <div style="padding:12px 16px;border-radius:10px;background:${d[2]?'var(--red-dim)':'var(--green-dim)'};border:1px solid ${d[2]?'rgba(239,68,68,.3)':'rgba(16,185,129,.3)'};">
+            <div style="font-size:10px;color:var(--text-muted);">Shrinkage</div>
+            <div style="font-size:16px;font-weight:700;color:${d[2]?'#f87171':'#34d399'}">${d[2]?'YES':'No'}</div>
+          </div>
+          <div style="padding:12px 16px;border-radius:10px;background:${d[3]?'var(--red-dim)':'var(--green-dim)'};border:1px solid ${d[3]?'rgba(239,68,68,.3)':'rgba(16,185,129,.3)'};">
+            <div style="font-size:10px;color:var(--text-muted);">Slag Inclusion</div>
+            <div style="font-size:16px;font-weight:700;color:${d[3]?'#f87171':'#34d399'}">${d[3]?'YES':'No'}</div>
+          </div>
+        </div>
+
+        <!-- Ownership -->
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:12px;margin-top:20px;">Ownership & Chain</div>
+        <div class="detail-grid">
+          <div class="detail-field"><div class="detail-label">Owner Address</div><div class="detail-value">${owner}</div></div>
+          <div class="detail-field"><div class="detail-label">Minted At</div><div class="detail-value">${ts}</div></div>
+          <div class="detail-field"><div class="detail-label">Contract</div><div class="detail-value">${CONTRACT_ADDRESS.slice(0,18)}...</div></div>
+          <div class="detail-field"><div class="detail-label">Network</div><div class="detail-value">Ethereum Sepolia</div></div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;gap:10px;">
+          <a href="https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}" target="_blank" class="btn btn-secondary" style="text-decoration:none;font-family:var(--font);font-size:13px;padding:10px 20px;">View on Etherscan ↗</a>
+          <button class="btn btn-secondary" onclick="copyToClipboard('${uri.slice(0,50)}...')">📋 Copy Token URI</button>
+        </div>`;
     } catch(e) {
-      showResult('lookupResult', `Error: ${e.message}`, 'error');
+      content.innerHTML = `<div class="result-box error" style="display:block;">Error: ${e.message}</div>`;
     }
   }
 
-  // ─── MINT EQUIPMENT ───────────────────────────────────────────────────
-  async function mintEquipment() {
-    if (!signer) return showToast("Connect MetaMask first", "error");
-    const to = document.getElementById('mintTo').value.trim() || userAddress;
-    const eqId = document.getElementById('mintEqId').value.trim();
-    const uri = document.getElementById('mintUri').value.trim() || 'ipfs://placeholder';
-    if (!eqId) return showResult('mintResult', 'Please enter an Equipment ID', 'error');
+  function closeModal() {
+    document.getElementById('detailModal').classList.remove('open');
+  }
 
-    showResult('mintResult', '⏳ Sending transaction...', 'loading');
+  // ─── MINT ─────────────────────────────────────────────────────────────
+  async function mintHeatBatch() {
+    if (!signer) return showToast('Connect MetaMask first', 'error');
+
+    const heatNo   = document.getElementById('m_heatNo').value.trim();
+    const mfg      = document.getElementById('m_manufacturer').value.trim();
+    const score    = parseInt(document.getElementById('m_qualityScore').value);
+
+    if (!heatNo) return showResult('mintResult', 'Heat number is required', 'error');
+    if (!mfg)   return showResult('mintResult', 'Manufacturer name is required', 'error');
+    if (isNaN(score) || score < 0 || score > 100) return showResult('mintResult', 'Quality score must be 0-100', 'error');
+
+    const pp = [
+      parseInt(document.getElementById('m_pouringTemp').value)       || 0,
+      parseInt(document.getElementById('m_injectionPressure').value) || 0,
+      parseInt(document.getElementById('m_injectionTime').value)     || 0,
+      parseInt(document.getElementById('m_humidity').value)          || 0,
+      parseInt(document.getElementById('m_roomTemp').value)          || 0,
+      parseInt(document.getElementById('m_processDuration').value)   || 0,
+    ];
+
+    // Chemical composition: multiply by 100 for 2 decimal precision
+    const cc = [
+      Math.round((parseFloat(document.getElementById('m_si').value) || 0) * 100),
+      Math.round((parseFloat(document.getElementById('m_fe').value) || 0) * 100),
+      Math.round((parseFloat(document.getElementById('m_mn').value) || 0) * 100),
+      Math.round((parseFloat(document.getElementById('m_mg').value) || 0) * 100),
+      Math.round((parseFloat(document.getElementById('m_cu').value) || 0) * 100),
+      Math.round((parseFloat(document.getElementById('m_zn').value) || 0) * 100),
+      Math.round((parseFloat(document.getElementById('m_ti').value) || 0) * 100),
+      Math.round((parseFloat(document.getElementById('m_al').value) || 0) * 100),
+    ];
+
+    const di = [
+      document.getElementById('m_distortion').checked,
+      document.getElementById('m_roughSurface').checked,
+      document.getElementById('m_shrinkage').checked,
+      document.getElementById('m_slagInclusion').checked,
+    ];
+
+    showResult('mintResult', '⏳ Sending transaction — confirm in MetaMask...', 'loading');
     try {
-      const tx = await contract.mintEquipment(to, BigInt(eqId), uri);
-      showResult('mintResult', `⏳ Tx sent: ${tx.hash}\nWaiting for confirmation...`, 'loading');
+      const tx = await contract.mintHeatBatch(userAddress, heatNo, mfg, pp, cc, di, score);
+      showResult('mintResult', `⏳ Transaction sent: ${tx.hash}\nWaiting for confirmation...`, 'loading');
       const receipt = await tx.wait();
-      showResult('mintResult', `✅ Equipment #${eqId} minted!\nTx: ${receipt.hash}\nBlock: ${receipt.blockNumber}`, 'success');
-      showToast(`Equipment #${eqId} minted successfully!`, 'success');
+
+      // Parse tokenId from logs
+      let tokenId = '?';
+      try {
+        const iface = new ethers.Interface(ABI);
+        for (const log of receipt.logs) {
+          try {
+            const parsed = iface.parseLog(log);
+            if (parsed.name === 'HeatBatchMinted') { tokenId = parsed.args[0].toString(); break; }
+          } catch {}
+        }
+      } catch {}
+
+      showResult('mintResult',
+        `✅ Heat Batch NFT Minted!\n\nHeat Number: ${heatNo}\nToken ID: ${tokenId}\nQuality Score: ${score}/100\nTx Hash: ${receipt.hash}`,
+        'success'
+      );
+      showToast(`Heat Batch #${heatNo} minted! Token #${tokenId}`, 'success');
+      clearForm();
+      await loadStats();
+      await loadDashboard();
     } catch(e) {
       showResult('mintResult', `Error: ${e.reason || e.message}`, 'error');
     }
   }
 
-  // ─── MINT PART ────────────────────────────────────────────────────────
-  async function mintPart() {
-    if (!signer) return showToast("Connect MetaMask first", "error");
-    const to = document.getElementById('partTo').value.trim() || userAddress;
-    const partId = document.getElementById('partId').value.trim();
-    const parentId = document.getElementById('partParentId').value.trim();
-    const uri = document.getElementById('partUri').value.trim() || 'ipfs://placeholder';
-    if (!partId || !parentId) return showResult('partResult', 'Please fill in Part ID and Parent Equipment ID', 'error');
-
-    showResult('partResult', '⏳ Sending transaction...', 'loading');
+  // ─── LOOKUP ───────────────────────────────────────────────────────────
+  async function lookupByHeatNo() {
+    const heatNo = document.getElementById('lookupHeatNo').value.trim();
+    if (!heatNo) return showResult('lookupResult', 'Enter a heat number', 'error');
+    showResult('lookupResult', '⏳ Searching...', 'loading');
     try {
-      const tx = await contract.mintPart(to, BigInt(partId), BigInt(parentId), uri);
-      showResult('partResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
-      const receipt = await tx.wait();
-      showResult('partResult', `✅ Part #${partId} minted (child of Equipment #${parentId})!\nTx: ${receipt.hash}`, 'success');
-      showToast(`Part #${partId} minted!`, 'success');
+      const rc = publicContract || contract;
+      const tokenId = await rc.getTokenIdByHeatNo(heatNo);
+      if (Number(tokenId) === 0) return showResult('lookupResult', `Heat number "${heatNo}" not found`, 'error');
+      showResult('lookupResult', `Found → Token ID: ${tokenId}\nOpening detail view...`, 'success');
+      setTimeout(() => showDetail(Number(tokenId)), 500);
     } catch(e) {
-      showResult('partResult', `Error: ${e.reason || e.message}`, 'error');
+      showResult('lookupResult', `Error: ${e.reason || e.message}`, 'error');
     }
   }
 
-  // ─── UPDATE STAGE ─────────────────────────────────────────────────────
-  async function updateStage() {
-    if (!signer) return showToast("Connect MetaMask first", "error");
-    const tokenId = document.getElementById('stageTokenId').value.trim();
-    const stage = document.getElementById('stageSelect').value;
-    const hashInput = document.getElementById('stageHash').value.trim();
-    const hash = hashInput || ethers.keccak256(ethers.toUtf8Bytes(`stage-${Date.now()}`));
-    if (!tokenId) return showResult('stageResult', 'Please enter a Token ID', 'error');
-
-    showResult('stageResult', '⏳ Sending transaction...', 'loading');
+  async function lookupByTokenId() {
+    const tokenId = document.getElementById('lookupTokenId').value.trim();
+    if (!tokenId) return showResult('lookupResult', 'Enter a token ID', 'error');
+    showResult('lookupResult', '⏳ Loading...', 'loading');
     try {
-      const tx = await contract.updateLifecycleStage(BigInt(tokenId), Number(stage), hash);
-      showResult('stageResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
-      const receipt = await tx.wait();
-      showResult('stageResult', `✅ Token #${tokenId} advanced to "${STAGES[stage]}"!\nTx: ${receipt.hash}`, 'success');
-      showToast(`Stage updated to ${STAGES[stage]}!`, 'success');
+      const rc = publicContract || contract;
+      const exists = await rc.exists(BigInt(tokenId));
+      if (!exists) return showResult('lookupResult', `Token #${tokenId} does not exist`, 'error');
+      showResult('lookupResult', `Token #${tokenId} exists — opening detail view...`, 'success');
+      setTimeout(() => showDetail(Number(tokenId)), 500);
     } catch(e) {
-      showResult('stageResult', `Error: ${e.reason || e.message}`, 'error');
-    }
-  }
-
-  // ─── ADD CERT ─────────────────────────────────────────────────────────
-  async function addCertification() {
-    if (!signer) return showToast("Connect MetaMask first", "error");
-    const tokenId = document.getElementById('certTokenId').value.trim();
-    const certType = document.getElementById('certType').value;
-    const docHash = document.getElementById('certDocHash').value.trim() || 'ipfs://cert-placeholder';
-    const notHash = document.getElementById('certNotHash').value.trim() || ethers.keccak256(ethers.toUtf8Bytes(`cert-${Date.now()}`));
-    if (!tokenId) return showResult('certResult', 'Please enter a Token ID', 'error');
-
-    showResult('certResult', '⏳ Sending transaction...', 'loading');
-    try {
-      const tx = await contract.addCertification(BigInt(tokenId), certType, docHash, notHash);
-      showResult('certResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
-      const receipt = await tx.wait();
-      showResult('certResult', `✅ "${certType}" certification added to Token #${tokenId}!\nTx: ${receipt.hash}`, 'success');
-      showToast(`${certType} certification added!`, 'success');
-    } catch(e) {
-      showResult('certResult', `Error: ${e.reason || e.message}`, 'error');
-    }
-  }
-
-  // ─── CARBON NFT ───────────────────────────────────────────────────────────
-  async function mintCarbonNFT() {
-    if (!signer) return showToast("Connect MetaMask first", "error");
-    const tokenId  = document.getElementById('carbonTokenId').value.trim();
-    const linkedId = document.getElementById('carbonLinkedId').value.trim() || '0';
-    const energy   = document.getElementById('carbonEnergy').value.trim();
-    const co2      = document.getElementById('carbonCO2').value.trim();
-    const score    = document.getElementById('carbonScore').value.trim();
-    const period   = document.getElementById('carbonPeriod').value.trim() || 'Batch-001';
-    const uri      = document.getElementById('carbonUri').value.trim() || 'ipfs://carbon-placeholder';
-    if (!tokenId || !energy || !co2 || !score) return showResult('carbonResult','Fill in Token ID, Energy, CO₂ and Score','error');
-    if (Number(score) > 100) return showResult('carbonResult','Score must be 0–100','error');
-
-    showResult('carbonResult','⏳ Sending transaction...','loading');
-    try {
-      const tx = await contract.mintCarbonNFT(
-        userAddress, BigInt(tokenId), BigInt(linkedId),
-        BigInt(energy), BigInt(co2), Number(score), period, uri
-      );
-      showResult('carbonResult',`⏳ Tx sent: ${tx.hash}`,'loading');
-      const receipt = await tx.wait();
-      showResult('carbonResult',`✅ Carbon NFT #${tokenId} minted!\nEnergy: ${(Number(energy)/1000).toFixed(1)} kWh | CO₂: ${(Number(co2)/1000).toFixed(1)} kg | Score: ${score}/100\nTx: ${receipt.hash}`,'success');
-      showToast(`Carbon NFT #${tokenId} minted! 🌿`,'success');
-    } catch(e) {
-      showResult('carbonResult',`Error: ${e.reason || e.message}`,'error');
-    }
-  }
-
-  async function lookupCarbonNFT() {
-    const tokenId = document.getElementById('carbonTokenId').value.trim();
-    if (!tokenId) return showResult('carbonResult','Enter a Token ID','error');
-    showResult('carbonResult','⏳ Reading carbon data...','loading');
-    document.getElementById('carbonDataCard').style.display = 'none';
-    try {
-      const pub = new ethers.JsonRpcProvider("https://sepolia.drpc.org");
-      const rc  = new ethers.Contract(CONTRACT_ADDRESS, ABI, pub);
-      const tType = await rc.tokenType(BigInt(tokenId));
-      if (Number(tType) !== 2) return showResult('carbonResult',`Token #${tokenId} is not a Carbon NFT (type=${tType})`,'error');
-      const data = await rc.getCarbonData(BigInt(tokenId));
-      const [energyWh, co2Grams, score, period, linked, lastUpdated] = data;
-      document.getElementById('cdEnergy').textContent  = `${(Number(energyWh)/1000).toFixed(1)} kWh (${Number(energyWh).toLocaleString()} Wh)`;
-      document.getElementById('cdCO2').textContent     = `${(Number(co2Grams)/1000).toFixed(1)} kg (${Number(co2Grams).toLocaleString()} g)`;
-      document.getElementById('cdScore').textContent   = `${score}/100 ${'🟢'.repeat(Math.round(score/20))}`;
-      document.getElementById('cdPeriod').textContent  = period;
-      document.getElementById('cdLinked').textContent  = Number(linked) === 0 ? 'Standalone' : `Equipment #${linked}`;
-      document.getElementById('cdUpdated').textContent = new Date(Number(lastUpdated)*1000).toLocaleString();
-      document.getElementById('carbonDataCard').style.display = 'block';
-      showResult('carbonResult',`✅ Carbon NFT #${tokenId} data loaded`,'success');
-    } catch(e) {
-      showResult('carbonResult',`Error: ${e.reason || e.message}`,'error');
+      showResult('lookupResult', `Error: ${e.reason || e.message}`, 'error');
     }
   }
 
   // ─── HELPERS ──────────────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
   function showResult(id, msg, type) {
     const el = document.getElementById(id);
     el.textContent = msg;
@@ -1253,12 +1082,61 @@
   }
 
   function showToast(msg, type = 'info') {
-    const t = document.getElementById('toast');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
     t.textContent = msg;
-    t.className = type;
-    t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 4000);
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 4000);
   }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard', 'success'));
+  }
+
+  function fillSampleData() {
+    document.getElementById('m_heatNo').value = 'H' + String(Math.floor(Math.random() * 900) + 100);
+    document.getElementById('m_manufacturer').value = 'Precision Foundry Ltd.';
+    document.getElementById('m_qualityScore').value = '92';
+    document.getElementById('m_pouringTemp').value = '692';
+    document.getElementById('m_injectionPressure').value = '35';
+    document.getElementById('m_injectionTime').value = '30';
+    document.getElementById('m_humidity').value = '22';
+    document.getElementById('m_roomTemp').value = '25';
+    document.getElementById('m_processDuration').value = '45';
+    document.getElementById('m_si').value = '7.20';
+    document.getElementById('m_fe').value = '0.60';
+    document.getElementById('m_mn').value = '0.30';
+    document.getElementById('m_mg').value = '0.30';
+    document.getElementById('m_cu').value = '0.10';
+    document.getElementById('m_zn').value = '0.10';
+    document.getElementById('m_ti').value = '0.10';
+    document.getElementById('m_al').value = '91.20';
+    document.getElementById('m_distortion').checked = true;
+    document.getElementById('m_roughSurface').checked = false;
+    document.getElementById('m_shrinkage').checked = false;
+    document.getElementById('m_slagInclusion').checked = false;
+    showToast('Sample data from dataset row filled!', 'info');
+  }
+
+  function clearForm() {
+    ['m_heatNo','m_manufacturer','m_qualityScore','m_pouringTemp','m_injectionPressure',
+     'm_injectionTime','m_humidity','m_roomTemp','m_processDuration',
+     'm_si','m_fe','m_mn','m_mg','m_cu','m_zn','m_ti','m_al'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    ['m_distortion','m_roughSurface','m_shrinkage','m_slagInclusion'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = false;
+    });
+    const r = document.getElementById('mintResult');
+    r.textContent = ''; r.style.display = 'none';
+  }
+
+  // Close modal on overlay click
+  document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
 </script>
 </body>
 </html>
