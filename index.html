@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Heat Batch NFT — Manufacturing Traceability DPP</title>
-  <meta name="description" content="On-chain Heat Batch NFT system for manufacturing traceability. Each token represents one manufacturing batch with process parameters, chemical composition, defect data, and quality scores stored immutably on Ethereum." />
+  <title>IOTA Manufacturing DPP & Heat Batch Portal</title>
+  <meta name="description" content="Unified Digital Product Passport system on Sepolia. Track aerospace component lifecycles and record immutable heat batch quality metrics." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
@@ -13,7 +13,7 @@
       --bg:         #050b14;
       --surface:    #0c1827;
       --surface2:   #112035;
-      --border:     rgba(16,185,129,0.12);
+      --border:     rgba(16,185,129,0.15);
       --border2:    rgba(255,255,255,0.06);
       --green:      #10b981;
       --green-dim:  rgba(16,185,129,0.15);
@@ -43,7 +43,7 @@
       overflow-x: hidden;
     }
 
-    /* ── GRID BG ── */
+    /* ── GRID + RADIAL GLOW BG ── */
     body::before {
       content: '';
       position: fixed; inset: 0; z-index: 0;
@@ -51,6 +51,14 @@
         linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px);
       background-size: 40px 40px;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 0%, rgba(16,185,129,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(6,182,212,0.05) 0%, transparent 60%);
       pointer-events: none;
     }
 
@@ -91,10 +99,28 @@
     }
     #switchBtn:hover { background: rgba(255,255,255,0.08); }
 
+    /* ── SYSTEM SWITCHER ── */
+    .system-switcher-container {
+      display: flex; justify-content: center; margin: 32px 0 8px; position: relative; z-index: 1;
+    }
+    .system-switcher {
+      display: flex; gap: 6px; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 30px;
+    }
+    .switcher-btn {
+      padding: 10px 24px; border-radius: 24px; border: none; background: transparent;
+      color: var(--text-muted); font-family: var(--font); font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+    }
+    .switcher-btn:hover { color: var(--text); }
+    .switcher-btn.active {
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.2);
+    }
+
     /* ── HERO ── */
     .hero {
       position: relative; z-index: 1;
-      padding: 60px 32px 40px;
+      padding: 30px 32px 40px;
       text-align: center;
       max-width: 900px; margin: 0 auto;
     }
@@ -108,12 +134,12 @@
       animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     h1 {
-      font-size: clamp(28px, 5vw, 52px); font-weight: 800; letter-spacing: -1.5px;
+      font-size: clamp(28px, 5vw, 46px); font-weight: 800; letter-spacing: -1.2px;
       line-height: 1.1; margin-bottom: 16px;
       background: linear-gradient(135deg, var(--green) 0%, var(--teal) 50%, #a78bfa 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .hero p { color: var(--text-dim); font-size: 16px; max-width: 600px; margin: 0 auto 32px; }
+    .hero p { color: var(--text-dim); font-size: 15px; max-width: 600px; margin: 0 auto 28px; line-height: 1.6; }
 
     /* ── STATS BAR ── */
     .stats-bar {
@@ -122,16 +148,16 @@
     .stat-chip {
       padding: 10px 20px; border-radius: 10px;
       background: var(--surface); border: 1px solid var(--border2);
-      font-size: 13px;
+      font-size: 12px;
     }
-    .stat-chip strong { color: var(--green); font-size: 20px; display: block; font-family: var(--mono); }
+    .stat-chip strong { color: var(--green); font-size: 18px; display: block; font-family: var(--mono); }
 
     /* ── WALLET STATUS BAR ── */
     #walletStatus {
       display: none; margin: 0 32px 24px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 16px 24px;
-      display: none; align-items: center; gap: 24px; flex-wrap: wrap;
+      align-items: center; gap: 24px; flex-wrap: wrap; position: relative; z-index: 1;
     }
     .ws-item { display: flex; flex-direction: column; gap: 2px; }
     .ws-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
@@ -142,6 +168,9 @@
     }
     .role-chip.admin   { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: #f87171; }
     .role-chip.foundry { background: var(--green-dim); border-color: rgba(16,185,129,.3); color: #34d399; }
+    .role-chip.oem     { background: var(--teal-dim); border-color: rgba(6,182,212,.3); color: #22d3ee; }
+    .role-chip.mro     { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); color: #fbbf24; }
+    .role-chip.carbon  { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); color: #10b981; }
 
     /* ── MAIN ── */
     main { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 32px 80px; }
@@ -151,12 +180,13 @@
       display: flex; gap: 4px; padding: 4px;
       background: var(--surface); border: 1px solid var(--border2);
       border-radius: var(--radius); width: fit-content; margin: 0 auto 32px;
+      overflow-x: auto; max-width: 100%;
     }
     .tab-btn {
-      padding: 10px 24px; border-radius: 10px; border: none;
+      padding: 10px 20px; border-radius: 10px; border: none;
       background: transparent; color: var(--text-muted);
       font-family: var(--font); font-size: 13px; font-weight: 500;
-      cursor: pointer; transition: all .2s;
+      cursor: pointer; transition: all .2s; white-space: nowrap;
     }
     .tab-btn:hover { color: var(--text); }
     .tab-btn.active {
@@ -182,7 +212,7 @@
       display: flex; align-items: center; justify-content: center;
       background: var(--green-dim);
     }
-    .card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+    .card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
 
     /* ── FORM ── */
     .form-section { margin-bottom: 28px; }
@@ -198,21 +228,21 @@
     .form-grid-3 { grid-template-columns: repeat(3, 1fr); }
     .fg { display: flex; flex-direction: column; gap: 6px; }
     .fg.full { grid-column: 1 / -1; }
-    label { font-size: 12px; font-weight: 500; color: var(--text-dim); }
-    input[type="text"], input[type="number"], select {
+    label, .form-label { font-size: 12px; font-weight: 500; color: var(--text-dim); }
+    input[type="text"], input[type="number"], select, .form-input, .form-select {
       padding: 10px 14px; border-radius: var(--radius-sm);
       background: rgba(255,255,255,0.04); border: 1px solid var(--border2);
       color: var(--text); font-family: var(--font); font-size: 14px;
       transition: border-color .2s; outline: none; width: 100%;
     }
-    input:focus, select:focus { border-color: var(--green); }
-    .hint { font-size: 11px; color: var(--text-muted); }
+    input:focus, select:focus, .form-input:focus, .form-select:focus { border-color: var(--green); }
+    .hint, .form-hint { font-size: 11px; color: var(--text-muted); }
 
     /* Checkbox row */
     .checkbox-row { display: flex; gap: 20px; flex-wrap: wrap; }
     .checkbox-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
     .checkbox-item input[type="checkbox"] {
-      width: 16px; height: 16px; accent-color: var(--red); cursor: pointer;
+      width: 16px; height: 16px; accent-color: var(--green); cursor: pointer;
     }
 
     /* ── BUTTONS ── */
@@ -221,6 +251,7 @@
       padding: 12px 28px; border-radius: var(--radius-sm);
       font-family: var(--font); font-size: 14px; font-weight: 600;
       cursor: pointer; border: none; transition: all .2s;
+      display: inline-flex; align-items: center; gap: 8px;
     }
     .btn-primary {
       background: linear-gradient(135deg, var(--green), #059669);
@@ -232,11 +263,15 @@
     }
     .btn-secondary:hover { background: rgba(255,255,255,.08); color: var(--text); }
     .btn-teal { background: linear-gradient(135deg, var(--teal), #0891b2); color: white; }
+    .btn-teal:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(6,182,212,0.35); }
+    .btn-accent { background: linear-gradient(135deg, #0891b2, #0e7490); color: white; }
+    .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(6,182,212,0.35); }
 
     /* ── RESULT BOX ── */
     .result-box {
       margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-sm);
       font-size: 13px; font-family: var(--mono); white-space: pre-wrap; display: none;
+      word-break: break-all;
     }
     .result-box.success { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.3); color: #34d399; }
     .result-box.error   { background: var(--red-dim); border: 1px solid rgba(239,68,68,.3); color: #f87171; }
@@ -367,11 +402,63 @@
     }
     @keyframes spin { to{ transform: rotate(360deg); } }
 
+    /* ── MANUFACTURING TIMELINE ── */
+    .lifecycle-track {
+      display: flex; align-items: center; gap: 0; margin: 24px 0; overflow-x: auto; padding: 4px 0;
+    }
+    .lifecycle-step {
+      display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; min-width: 80px; position: relative;
+    }
+    .lifecycle-step::after {
+      content: ''; position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: var(--border2); z-index: 0;
+    }
+    .lifecycle-step:last-child::after { display: none; }
+    .lifecycle-dot {
+      width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border2);
+      background: var(--surface2); display: flex; align-items: center; justify-content: center;
+      font-size: 12px; position: relative; z-index: 1; transition: all 0.3s;
+    }
+    .lifecycle-dot.active { border-color: var(--green); background: var(--green-dim); box-shadow: 0 0 12px rgba(16,185,129,0.4); }
+    .lifecycle-dot.done { border-color: var(--teal); background: var(--teal-dim); }
+    .lifecycle-label { font-size: 10px; color: var(--text-muted); text-align: center; line-height: 1.3; }
+
+    /* ── TOKEN CARD ── */
+    .token-card {
+      background: linear-gradient(135deg, var(--green-dim), var(--teal-dim));
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-top: 16px; display: none;
+    }
+    .token-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    }
+    .token-id {
+      font-size: 28px; font-weight: 800;
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stage-badge { padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; border: 1px solid; }
+    .stage-0 { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: #34d399; }
+    .stage-1 { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.4); color: #22d3ee; }
+    .stage-2 { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.4); color: #60a5fa; }
+    .stage-3 { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: #fbbf24; }
+    .stage-4 { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #f87171; }
+
+    .token-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .token-field { display: flex; flex-direction: column; gap: 4px; }
+    .token-field-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .token-field-value { font-size: 13px; font-family: var(--mono); color: var(--text-dim); word-break: break-all; }
+    .divider { height: 1px; background: var(--border2); margin: 24px 0; }
+
+    /* Carbon data card */
+    #carbonDataCard {
+      margin-top: 16px; background: linear-gradient(135deg, var(--green-dim), var(--teal-dim));
+      border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: none;
+    }
+
     @media (max-width: 640px) {
       header { padding: 0 16px; }
       main { padding: 0 16px 60px; }
-      .hero { padding: 40px 16px 24px; }
-      .detail-grid { grid-template-columns: 1fr; }
+      .hero { padding: 30px 16px 24px; }
+      .detail-grid, .token-grid { grid-template-columns: 1fr; }
       .chem-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
@@ -381,10 +468,10 @@
 <!-- ── HEADER ─────────────────────────────────────── -->
 <header>
   <div class="logo">
-    <div class="logo-icon">🔥</div>
+    <div class="logo-icon">🏭</div>
     <div>
-      <div class="logo-title">Heat Batch NFT</div>
-      <div class="logo-sub">Manufacturing Traceability DPP</div>
+      <div class="logo-title" id="logoTitle">IOTA Manufacturing DPP</div>
+      <div class="logo-sub">Combined Traceability Portal</div>
     </div>
   </div>
   <div style="display:flex;gap:8px;align-items:center;">
@@ -393,26 +480,47 @@
   </div>
 </header>
 
+<!-- ── SYSTEM SWITCHER ────────────────────────────── -->
+<div class="system-switcher-container">
+  <div class="system-switcher">
+    <button class="switcher-btn active" id="btn-system-mfg" onclick="setSystemMode('mfg')">🏭 Manufacturing DPP</button>
+    <button class="switcher-btn" id="btn-system-heat" onclick="setSystemMode('heat')">🔥 Heat Batch NFT</button>
+  </div>
+</div>
+
 <!-- ── WALLET STATUS ──────────────────────────────── -->
-<div id="walletStatus" style="display:none;margin:16px 32px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 24px;display:none;align-items:center;gap:24px;flex-wrap:wrap;">
+<div id="walletStatus">
   <div class="ws-item"><div class="ws-label">Address</div><div class="ws-value" id="wsAddr">—</div></div>
   <div class="ws-item"><div class="ws-label">Network</div><div class="ws-value">Ethereum Sepolia</div></div>
   <div class="ws-item"><div class="ws-label">Roles</div><div id="wsRoles" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;"></div></div>
-  <div id="noRoleWarn" style="display:none;margin-left:auto;padding:8px 14px;background:var(--red-dim);border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#f87171;">⚠️ No roles — connect deployer wallet to mint</div>
+  <div id="noRoleWarn" style="display:none;margin-left:auto;padding:8px 14px;background:var(--red-dim);border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#f87171;"></div>
 </div>
 
 <!-- ── HERO ───────────────────────────────────────── -->
 <div class="hero">
   <div class="hero-badge"><span class="dot"></span> Live on Ethereum Sepolia Testnet</div>
-  <h1>Heat Batch NFT<br>Traceability System</h1>
-  <p>Every manufacturing batch becomes an immutable NFT — process parameters, chemical composition, defect analysis, and quality scores stored permanently on-chain.</p>
-  <div class="stats-bar">
+  <h1 id="hero-title">IOTA Manufacturing DPP<br>Product Passport</h1>
+  <p id="hero-desc">Tamper-proof lifecycle tracking for aerospace components — from investment casting through end-of-life, anchored on-chain as ERC-721 NFTs.</p>
+  
+  <!-- MFG STATS -->
+  <div class="stats-bar" id="stats-bar-mfg">
+    <div class="stat-chip"><strong id="statName">—</strong>Token Name</div>
+    <div class="stat-chip"><strong id="statSymbol">—</strong>Symbol</div>
+    <div class="stat-chip"><strong>Sepolia</strong>Network</div>
+    <div class="stat-chip" style="border-color:var(--border);">
+      <strong style="font-size:11px;color:var(--text-muted);">Contract</strong>
+      <span style="font-size:10px;font-family:var(--mono);color:var(--text-muted);" id="contractChipMfg">Loading...</span>
+    </div>
+  </div>
+
+  <!-- HEAT STATS -->
+  <div class="stats-bar" id="stats-bar-heat" style="display:none;">
     <div class="stat-chip"><strong id="statTotal">—</strong>Batches Minted</div>
     <div class="stat-chip"><strong id="statClean">—</strong>Defect-Free</div>
     <div class="stat-chip"><strong id="statAvgQ">—</strong>Avg Quality Score</div>
     <div class="stat-chip" style="border-color:var(--border);">
       <strong style="font-size:11px;color:var(--text-muted);">Contract</strong>
-      <span style="font-size:10px;font-family:var(--mono);color:var(--text-muted);" id="contractChip">Loading...</span>
+      <span style="font-size:10px;font-family:var(--mono);color:var(--text-muted);" id="contractChipHeat">Loading...</span>
     </div>
   </div>
 </div>
@@ -420,25 +528,289 @@
 <!-- ── TOAST ──────────────────────────────────────── -->
 <div id="toastContainer"></div>
 
-<!-- ── MAIN ──────────────────────────────────────── -->
+<!-- ── MAIN ── -->
 <main>
-  <!-- TAB BAR -->
-  <div class="tab-bar">
-    <button class="tab-btn active" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
-    <button class="tab-btn" id="tab-mint"      onclick="switchTab('mint')">🔥 Mint Batch</button>
-    <button class="tab-btn" id="tab-lookup"    onclick="switchTab('lookup')">🔍 Lookup</button>
+  <!-- TAB BAR FOR MFG -->
+  <div class="tab-bar" id="tab-bar-mfg">
+    <button class="tab-btn active" id="tab-mfg-lookup" onclick="switchTabMfg('lookup')">🔍 Lookup Token</button>
+    <button class="tab-btn" id="tab-mfg-mint"      onclick="switchTabMfg('mint')">⚙️ Mint Equipment</button>
+    <button class="tab-btn" id="tab-mfg-part"      onclick="switchTabMfg('part')">🔩 Mint Part</button>
+    <button class="tab-btn" id="tab-mfg-stage"     onclick="switchTabMfg('stage')">📊 Update Stage</button>
+    <button class="tab-btn" id="tab-mfg-cert"      onclick="switchTabMfg('cert')">📜 Add Certification</button>
+    <button class="tab-btn" id="tab-mfg-carbon"    onclick="switchTabMfg('carbon')" style="border-color:rgba(16,185,129,0.3);color:var(--green);">🌿 Carbon NFT</button>
+  </div>
+
+  <!-- TAB BAR FOR HEAT -->
+  <div class="tab-bar" id="tab-bar-heat" style="display:none;">
+    <button class="tab-btn active" id="tab-heat-dashboard" onclick="switchTabHeat('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" id="tab-heat-mint"      onclick="switchTabHeat('mint')">🔥 Mint Batch</button>
+    <button class="tab-btn" id="tab-heat-lookup"    onclick="switchTabHeat('lookup')">🔍 Lookup</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════
-       PANEL: DASHBOARD
+       MANUFACTURING DPP PANELS
   ══════════════════════════════════════════════════ -->
-  <div class="panel active" id="panel-dashboard">
+  
+  <!-- PANEL: MFG LOOKUP -->
+  <div class="panel panel-mfg active" id="panel-mfg-lookup">
+    <div class="card">
+      <div class="card-title"><div class="card-icon">🔍</div> Token Lookup</div>
+      <div class="card-desc">Query any token on-chain by its ID. View owner, lifecycle stage, IPFS metadata URI, parent and child relationships.</div>
+
+      <div class="lifecycle-track" id="lifecycleTrack">
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc0">🏭</div><div class="lifecycle-label">Manufacturing</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc1">🚢</div><div class="lifecycle-label">Supply Chain</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc2">✈️</div><div class="lifecycle-label">Operation</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc3">🔧</div><div class="lifecycle-label">Maintenance</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot" id="lc4">♻️</div><div class="lifecycle-label">End of Life</div></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="fg">
+          <label>Token ID</label>
+          <input type="number" id="lookupId" placeholder="e.g. 1" min="0" />
+        </div>
+        <div class="fg" style="justify-content:flex-end;">
+          <button class="btn btn-primary" onclick="lookupToken()">🔍 Lookup Token</button>
+        </div>
+      </div>
+
+      <div class="result-box" id="lookupResult"></div>
+
+      <div class="token-card" id="tokenCard">
+        <div class="token-header">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">TOKEN ID</div>
+            <div class="token-id" id="tcId">—</div>
+          </div>
+          <div class="stage-badge" id="tcStageBadge">—</div>
+        </div>
+        <div class="token-grid">
+          <div class="token-field"><div class="token-field-label">Owner</div><div class="token-field-value" id="tcOwner">—</div></div>
+          <div class="token-field"><div class="token-field-label">Parent Token</div><div class="token-field-value" id="tcParent">—</div></div>
+          <div class="token-field"><div class="token-field-label">Child Count</div><div class="token-field-value" id="tcChildren">—</div></div>
+          <div class="token-field"><div class="token-field-label">Type</div><div class="token-field-value" id="tcType">—</div></div>
+          <div class="token-field" style="grid-column:1/-1;"><div class="token-field-label">Metadata URI</div><div class="token-field-value" id="tcUri">—</div></div>
+        </div>
+        <div class="divider"></div>
+        <a id="tcEtherscan" href="#" target="_blank" class="btn btn-secondary" style="font-size:12px;">View on Etherscan ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: MFG MINT EQUIPMENT -->
+  <div class="panel panel-mfg" id="panel-mfg-mint" style="display:none;">
+    <div class="card">
+      <div class="card-title"><div class="card-icon">⚙️</div> Mint Equipment NFT</div>
+      <div class="card-desc">Create a new equipment token representing a turbine, casting machine, or other top-level aerospace equipment. Requires FOUNDRY_ROLE or ADMIN_ROLE.</div>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Recipient Address</label>
+          <input type="text" id="mintTo" placeholder="0x... (leave blank for your wallet)" />
+        </div>
+        <div class="fg">
+          <label>Equipment ID (Token ID) *</label>
+          <input type="number" id="mintEqId" placeholder="e.g. 1" min="1" />
+          <span class="hint">Must be unique — use a new number</span>
+        </div>
+        <div class="fg full">
+          <label>Metadata URI (IPFS) *</label>
+          <input type="text" id="mintUri" placeholder="ipfs://Qm... or https://..." />
+          <span class="hint">IPFS link to the equipment's JSON metadata</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-accent" onclick="mintEquipment()">⚙️ Mint Equipment</button>
+      </div>
+      <div class="result-box" id="mintResult"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: MFG MINT PART -->
+  <div class="panel panel-mfg" id="panel-mfg-part" style="display:none;">
+    <div class="card">
+      <div class="card-title"><div class="card-icon">🔩</div> Mint Part NFT</div>
+      <div class="card-desc">Create a part token (e.g. turbine blade, nozzle) linked to a parent equipment token. Parts inherit the equipment's lifecycle context.</div>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Recipient Address</label>
+          <input type="text" id="partTo" placeholder="0x... (leave blank for your wallet)" />
+        </div>
+        <div class="fg">
+          <label>Part ID (Token ID) *</label>
+          <input type="number" id="partId" placeholder="e.g. 2" min="1" />
+        </div>
+        <div class="fg">
+          <label>Parent Equipment ID *</label>
+          <input type="number" id="partParentId" placeholder="e.g. 1" min="1" />
+        </div>
+        <div class="fg">
+          <label>Metadata URI</label>
+          <input type="text" id="partUri" placeholder="ipfs://Qm..." />
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="mintPart()">🔩 Mint Part</button>
+      </div>
+      <div class="result-box" id="partResult"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: MFG UPDATE STAGE -->
+  <div class="panel panel-mfg" id="panel-mfg-stage" style="display:none;">
+    <div class="card">
+      <div class="card-title"><div class="card-icon">📊</div> Update Lifecycle Stage</div>
+      <div class="card-desc">Advance a token to the next lifecycle stage. Each transition is permanently recorded on-chain with an IOTA Notarization hash.</div>
+      
+      <div class="lifecycle-track" style="margin-bottom:24px;">
+        <div class="lifecycle-step"><div class="lifecycle-dot done">🏭</div><div class="lifecycle-label">Manufacturing</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot">🚢</div><div class="lifecycle-label">Supply Chain</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot">✈️</div><div class="lifecycle-label">Operation</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot">🔧</div><div class="lifecycle-label">Maintenance</div></div>
+        <div class="lifecycle-step"><div class="lifecycle-dot">♻️</div><div class="lifecycle-label">End of Life</div></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="fg">
+          <label>Token ID *</label>
+          <input type="number" id="stageTokenId" placeholder="e.g. 1" min="0" />
+        </div>
+        <div class="fg">
+          <label>New Lifecycle Stage *</label>
+          <select id="stageSelect">
+            <option value="0">🏭 Manufacturing</option>
+            <option value="1">🚢 Supply Chain</option>
+            <option value="2">✈️ Operation</option>
+            <option value="3">🔧 Maintenance</option>
+            <option value="4">♻️ End of Life</option>
+          </select>
+        </div>
+        <div class="fg full">
+          <label>IOTA Notarization Hash (optional)</label>
+          <input type="text" id="stageHash" placeholder="0x0000... (auto-filled if empty)" />
+          <span class="hint">Leave blank to auto-generate a placeholder hash</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="updateStage()">📊 Update Stage</button>
+      </div>
+      <div class="result-box" id="stageResult"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: MFG CERTIFICATION -->
+  <div class="panel panel-mfg" id="panel-mfg-cert" style="display:none;">
+    <div class="card">
+      <div class="card-title"><div class="card-icon">📜</div> Add Certification</div>
+      <div class="card-desc">Attach an aerospace certification (NDT, X-Ray, Heat Treatment, etc.) to a token, linking to the IPFS document and IOTA Notarization hash.</div>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Token ID *</label>
+          <input type="number" id="certTokenId" placeholder="e.g. 1" min="0" />
+        </div>
+        <div class="fg">
+          <label>Certification Type *</label>
+          <select id="certType">
+            <option value="NDT">NDT — Non-Destructive Testing</option>
+            <option value="X-Ray">X-Ray Inspection</option>
+            <option value="HeatTreatment">Heat Treatment</option>
+            <option value="DimensionalCheck">Dimensional Check</option>
+            <option value="MaterialTest">Material Test</option>
+            <option value="AS9100">AS9100 Compliance</option>
+            <option value="FAA">FAA Approval</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Document Hash (IPFS) *</label>
+          <input type="text" id="certDocHash" placeholder="ipfs://Qm..." />
+        </div>
+        <div class="fg">
+          <label>Notarization Hash</label>
+          <input type="text" id="certNotHash" placeholder="0x000... (auto if blank)" />
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="addCertification()">📜 Add Certification</button>
+      </div>
+      <div class="result-box" id="certResult"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: MFG CARBON NFT -->
+  <div class="panel panel-mfg" id="panel-mfg-carbon" style="display:none;">
+    <div class="card" style="border-color:rgba(16,185,129,0.2);">
+      <div class="card-title">
+        <div class="icon" style="background:rgba(16,185,129,0.15);">🌿</div>
+        Mint Carbon NFT
+        <span style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:100px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#34d399;font-weight:600;">v2</span>
+      </div>
+      <div class="card-desc">Record the energy consumption and CO₂ footprint of a manufacturing batch as an immutable on-chain Carbon NFT. Requires CARBON_REPORTER_ROLE or ADMIN.</div>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Carbon Token ID *</label>
+          <input type="number" id="carbonTokenId" placeholder="e.g. 100" min="1" />
+          <span class="hint">Must be unique — different from equipment/part IDs</span>
+        </div>
+        <div class="fg">
+          <label>Linked Equipment ID</label>
+          <input type="number" id="carbonLinkedId" placeholder="e.g. 1 (0 for standalone)" min="0" />
+        </div>
+        <div class="fg">
+          <label>Energy Consumed (Wh) *</label>
+          <input type="number" id="carbonEnergy" placeholder="e.g. 120000 = 120 kWh" min="0" />
+        </div>
+        <div class="fg">
+          <label>CO₂ Emitted (grams) *</label>
+          <input type="number" id="carbonCO2" placeholder="e.g. 32000 = 32 kg" min="0" />
+        </div>
+        <div class="fg">
+          <label>Sustainability Score (0–100) *</label>
+          <input type="number" id="carbonScore" placeholder="e.g. 72" min="0" max="100" />
+          <span class="hint">100 = fully green ♻️</span>
+        </div>
+        <div class="fg">
+          <label>Reporting Period</label>
+          <input type="text" id="carbonPeriod" placeholder="e.g. Batch-B101 or 2024-Q1" />
+        </div>
+        <div class="fg full">
+          <label>Metadata URI (IPFS)</label>
+          <input type="text" id="carbonUri" placeholder="ipfs://Qm... or leave blank" />
+        </div>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="mintCarbonNFT()">🌿 Mint Carbon NFT</button>
+        <button class="btn btn-secondary" onclick="lookupCarbonNFT()">🔍 Lookup Carbon Data</button>
+      </div>
+      <div class="result-box" id="carbonResult"></div>
+
+      <!-- Carbon Data Card Output -->
+      <div id="carbonDataCard">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-weight:700;">CARBON NFT DATA</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="token-field"><div class="token-field-label">⚡ Energy</div><div class="token-field-value" id="cdEnergy">—</div></div>
+          <div class="token-field"><div class="token-field-label">💨 CO₂ Emitted</div><div class="token-field-value" id="cdCO2">—</div></div>
+          <div class="token-field"><div class="token-field-label">🌿 Sustainability</div><div class="token-field-value" id="cdScore">—</div></div>
+          <div class="token-field"><div class="token-field-label">📅 Period</div><div class="token-field-value" id="cdPeriod">—</div></div>
+          <div class="token-field"><div class="token-field-label">🔗 Linked Equipment</div><div class="token-field-value" id="cdLinked">—</div></div>
+          <div class="token-field"><div class="token-field-label">🕐 Last Updated</div><div class="token-field-value" id="cdUpdated">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════
+       HEAT BATCH NFT PANELS
+  ══════════════════════════════════════════════════ -->
+  
+  <!-- PANEL: HEAT DASHBOARD -->
+  <div class="panel panel-heat" id="panel-heat-dashboard" style="display:none;">
     <div class="dashboard-header">
       <h2 style="font-size:18px;font-weight:700;">All Heat Batches</h2>
       <div class="search-wrap">
         <input type="text" id="searchInput" placeholder="Search by Heat Number (e.g. H001)" oninput="filterCards()" />
         <button class="btn btn-secondary" onclick="searchByHeatNo()">Search</button>
-        <button class="btn btn-secondary" onclick="loadDashboard()">↻ Refresh</button>
+        <button class="btn btn-secondary" onclick="loadHeatDashboard()">↻ Refresh</button>
       </div>
     </div>
 
@@ -453,10 +825,8 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       PANEL: MINT
-  ══════════════════════════════════════════════════ -->
-  <div class="panel" id="panel-mint">
+  <!-- PANEL: HEAT MINT BATCH -->
+  <div class="panel panel-heat" id="panel-heat-mint" style="display:none;">
     <div class="card">
       <div class="card-title"><div class="card-icon">🔥</div> Mint Heat Batch NFT</div>
       <div class="card-desc">Record a complete manufacturing batch as an immutable ERC-721 NFT. All data is stored on-chain — no IPFS required.</div>
@@ -545,14 +915,12 @@
         <button class="btn btn-secondary" onclick="fillSampleData()">📋 Fill Sample Data</button>
         <button class="btn btn-secondary" onclick="clearForm()">✕ Clear</button>
       </div>
-      <div class="result-box" id="mintResult"></div>
+      <div class="result-box" id="mintHeatResult"></div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       PANEL: LOOKUP
-  ══════════════════════════════════════════════════ -->
-  <div class="panel" id="panel-lookup">
+  <!-- PANEL: HEAT LOOKUP -->
+  <div class="panel panel-heat" id="panel-heat-lookup" style="display:none;">
     <div class="card">
       <div class="card-title"><div class="card-icon">🔍</div> Lookup Heat Batch</div>
       <div class="card-desc">Search by Heat Number or Token ID to retrieve the complete on-chain batch record.</div>
@@ -568,9 +936,10 @@
           <button class="btn btn-teal" style="margin-top:8px;" onclick="lookupByTokenId()">Lookup</button>
         </div>
       </div>
-      <div class="result-box" id="lookupResult"></div>
+      <div class="result-box" id="lookupHeatResult"></div>
     </div>
   </div>
+
 </main>
 
 <!-- ══════════════════════════════════════════════════
@@ -584,18 +953,46 @@
 </div>
 
 <!-- ── FOOTER ─────────────────────────────────────── -->
-<footer style="text-align:center;padding:32px;color:var(--text-muted);font-size:12px;border-top:1px solid var(--border2);position:relative;z-index:1;">
-  Heat Batch NFT · Ethereum Sepolia Testnet · ERC-721 On-Chain Metadata
-  <br><span id="footerContract" style="font-family:var(--mono);font-size:11px;"></span>
+<footer style="text-align:center;padding:32px;color:var(--text-muted);font-size:12px;border-top:1px solid var(--border2);position:relative;z-index:1;line-height:1.7;">
+  IOTA Manufacturing Traceability Portal · Ethereum Sepolia Testnet
+  <br>
+  Manufacturing DPP Contract: <span id="footerContractMfg" style="font-family:var(--mono);font-size:11px;">Loading...</span>
+  <br>
+  Heat Batch NFT Contract: <span id="footerContractHeat" style="font-family:var(--mono);font-size:11px;">Loading...</span>
 </footer>
 
+<!-- ─── JAVASCRIPT CODE ────────────────────────────── -->
 <script>
   // ─── CONFIG ───────────────────────────────────────────────────────────
-  const CONTRACT_ADDRESS = "0xE126FB587eC8612A0CE4ad95F0A720D705AFB070"; // HeatBatchNFT — Sepolia
-  const SEPOLIA_CHAIN_ID = "0xaa36a7";
-  const RPC = "https://sepolia.drpc.org";
+  const CONTRACT_ADDRESS_MFG  = "0xc6e9D390Ba802079eb1e7d4399F4d38daF97A5f8"; // v2 with Carbon NFT
+  const CONTRACT_ADDRESS_HEAT = "0xE126FB587eC8612A0CE4ad95F0A720D705AFB070"; // HeatBatchNFT
+  const SEPOLIA_CHAIN_ID      = "0xaa36a7";
+  const RPC                   = "https://sepolia.drpc.org";
 
-  const ABI = [
+  const STAGES = ["Manufacturing", "Supply Chain", "Operation", "Maintenance", "End of Life"];
+  const STAGE_EMOJIS = ["🏭", "🚢", "✈️", "🔧", "♻️"];
+
+  const ABI_MFG = [
+    "function name() view returns (string)",
+    "function symbol() view returns (string)",
+    "function mintEquipment(address to, uint256 equipmentId, string initialURI)",
+    "function mintPart(address to, uint256 partId, uint256 equipmentId, string initialURI)",
+    "function mintCarbonNFT(address to, uint256 tokenId, uint256 linkedEquipmentId, uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, string reportingPeriod, string initialURI)",
+    "function updateCarbonData(uint256 tokenId, uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, bytes32 notarizationHash)",
+    "function getCarbonData(uint256 tokenId) view returns (uint256 energyWh, uint256 co2Grams, uint8 sustainabilityScore, string reportingPeriod, uint256 linkedEquipmentId, uint256 lastUpdated)",
+    "function getTokenInfo(uint256 tokenId) view returns (address owner, uint8 stage, string uri, uint256 parent, uint256 childCount)",
+    "function updateLifecycleStage(uint256 tokenId, uint8 newStage, bytes32 notarizationHash)",
+    "function addCertification(uint256 tokenId, string certType, string documentHash, bytes32 notarizationHash)",
+    "function recordMaintenance(uint256 tokenId, string details, bytes32 notarizationHash)",
+    "function getRoles(address account) view returns (bool foundry, bool machining, bool oem, bool mro, bool admin, bool carbonReporter)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function exists(uint256 tokenId) view returns (bool)",
+    "function getChildCount(uint256 equipmentId) view returns (uint256)",
+    "function parentOf(uint256) view returns (uint256)",
+    "function tokenType(uint256) view returns (uint8)"
+  ];
+
+  const ABI_HEAT = [
     "function mintHeatBatch(address to, string heatNo, string manufacturer, tuple(uint16,uint16,uint16,uint8,uint8,uint16) pp, tuple(uint16,uint16,uint16,uint16,uint16,uint16,uint16,uint16) cc, tuple(bool,bool,bool,bool) di, uint8 qualityScore) returns (uint256)",
     "function getHeatBatch(uint256 tokenId) view returns (tuple(string heatNo, uint256 mintTimestamp, string manufacturer, tuple(uint16,uint16,uint16,uint8,uint8,uint16) processParams, tuple(uint16,uint16,uint16,uint16,uint16,uint16,uint16,uint16) chemComp, tuple(bool,bool,bool,bool) defects, uint8 qualityScore))",
     "function getTokenIdByHeatNo(string heatNo) view returns (uint256)",
@@ -612,13 +1009,22 @@
   ];
 
   // ─── STATE ────────────────────────────────────────────────────────────
-  let provider, signer, contract, publicContract, userAddress;
+  let provider, signer;
+  let contractMfg, contractHeat;
+  let publicContractMfg, publicContractHeat;
+  let userAddress;
+  let systemMode = 'mfg'; // 'mfg' or 'heat'
+  let activeMfgTab = 'lookup';
+  let activeHeatTab = 'dashboard';
   let dashboardData = [];
 
   // ─── INIT ─────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('contractChip').textContent = CONTRACT_ADDRESS.slice(0,8) + '...' + CONTRACT_ADDRESS.slice(-4);
-    document.getElementById('footerContract').textContent = CONTRACT_ADDRESS;
+    // Fill contract details in chips and footer
+    document.getElementById('contractChipMfg').textContent = CONTRACT_ADDRESS_MFG.slice(0,8) + '...' + CONTRACT_ADDRESS_MFG.slice(-4);
+    document.getElementById('contractChipHeat').textContent = CONTRACT_ADDRESS_HEAT.slice(0,8) + '...' + CONTRACT_ADDRESS_HEAT.slice(-4);
+    document.getElementById('footerContractMfg').textContent = CONTRACT_ADDRESS_MFG;
+    document.getElementById('footerContractHeat').textContent = CONTRACT_ADDRESS_HEAT;
 
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', async (accs) => {
@@ -632,18 +1038,90 @@
       window.ethereum.on('chainChanged', () => window.location.reload());
     }
 
-    // load public data
+    // Load public read-only details
     try {
-      publicContract = new ethers.Contract(
-        CONTRACT_ADDRESS, ABI,
-        new ethers.JsonRpcProvider(RPC)
-      );
-      await loadStats();
-      await loadDashboard();
+      const pubProvider = new ethers.JsonRpcProvider(RPC);
+      publicContractMfg = new ethers.Contract(CONTRACT_ADDRESS_MFG, ABI_MFG, pubProvider);
+      publicContractHeat = new ethers.Contract(CONTRACT_ADDRESS_HEAT, ABI_HEAT, pubProvider);
+      
+      await loadStatsMfg();
+      await loadStatsHeat();
+      await loadHeatDashboard();
     } catch(e) {
-      console.warn('Public load failed:', e.message);
+      console.warn('Public RPC connection/load failed:', e.message);
     }
   });
+
+  // ─── SYSTEM MODE SWITCHER ─────────────────────────────────────────────
+  function setSystemMode(mode) {
+    systemMode = mode;
+    
+    // Toggle switcher buttons
+    document.getElementById('btn-system-mfg').classList.toggle('active', mode === 'mfg');
+    document.getElementById('btn-system-heat').classList.toggle('active', mode === 'heat');
+    
+    // Toggle tab bars
+    document.getElementById('tab-bar-mfg').style.display = (mode === 'mfg') ? 'flex' : 'none';
+    document.getElementById('tab-bar-heat').style.display = (mode === 'heat') ? 'flex' : 'none';
+
+    // Show/hide correct stats bars
+    document.getElementById('stats-bar-mfg').style.display = (mode === 'mfg') ? 'flex' : 'none';
+    document.getElementById('stats-bar-heat').style.display = (mode === 'heat') ? 'flex' : 'none';
+
+    // Update logo and hero texts
+    const logoTitle = document.getElementById('logoTitle');
+    const heroTitle = document.getElementById('hero-title');
+    const heroDesc = document.getElementById('hero-desc');
+    
+    if (mode === 'mfg') {
+      logoTitle.textContent = "IOTA Manufacturing DPP";
+      heroTitle.innerHTML = "IOTA Manufacturing DPP<br>Product Passport";
+      heroDesc.textContent = "Tamper-proof lifecycle tracking for aerospace components — from investment casting through end-of-life, anchored on-chain as ERC-721 NFTs.";
+    } else {
+      logoTitle.textContent = "Heat Batch NFT Portal";
+      heroTitle.innerHTML = "Heat Batch NFT<br>Traceability System";
+      heroDesc.textContent = "Every manufacturing batch becomes an immutable NFT — process parameters, chemical composition, defect analysis, and quality scores stored permanently on-chain.";
+    }
+
+    // Refresh wallet connection and roles for the active system
+    updateWalletUI();
+
+    // Trigger tab activation
+    if (mode === 'mfg') {
+      switchTabMfg(activeMfgTab);
+    } else {
+      switchTabHeat(activeHeatTab);
+    }
+  }
+
+  // ─── TABS ─────────────────────────────────────────────────────────────
+  function switchTabMfg(name) {
+    activeMfgTab = name;
+    document.querySelectorAll('#tab-bar-mfg .tab-btn').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel-mfg').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    });
+    
+    document.getElementById('tab-mfg-' + name).classList.add('active');
+    const panel = document.getElementById('panel-mfg-' + name);
+    panel.classList.add('active');
+    panel.style.display = 'block';
+  }
+
+  function switchTabHeat(name) {
+    activeHeatTab = name;
+    document.querySelectorAll('#tab-bar-heat .tab-btn').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel-heat').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    });
+    
+    document.getElementById('tab-heat-' + name).classList.add('active');
+    const panel = document.getElementById('panel-heat-' + name);
+    panel.classList.add('active');
+    panel.style.display = 'block';
+  }
 
   // ─── WALLET ───────────────────────────────────────────────────────────
   async function connectWallet() {
@@ -656,38 +1134,31 @@
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: SEPOLIA_CHAIN_ID }]
           });
-        } catch { showToast('Please switch to Sepolia in MetaMask', 'error'); return; }
+        } catch { 
+          showToast('Please switch to Sepolia in MetaMask', 'error'); 
+          return; 
+        }
       }
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       provider    = new ethers.BrowserProvider(window.ethereum);
       signer      = await provider.getSigner();
       userAddress = await signer.getAddress();
-      contract    = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+      
+      // Initialize both contracts
+      contractMfg  = new ethers.Contract(CONTRACT_ADDRESS_MFG, ABI_MFG, signer);
+      contractHeat = new ethers.Contract(CONTRACT_ADDRESS_HEAT, ABI_HEAT, signer);
 
       const btn = document.getElementById('connectBtn');
       btn.textContent = `✅ ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
       btn.classList.add('connected');
       document.getElementById('switchBtn').style.display = 'block';
 
-      document.getElementById('wsAddr').textContent = userAddress;
-      const ws = document.getElementById('walletStatus');
-      ws.style.display = 'flex';
-
-      const [isFoundry, isAdmin] = await contract.getRoles(userAddress);
-      const rolesEl = document.getElementById('wsRoles');
-      rolesEl.innerHTML = '';
-      if (isAdmin)   rolesEl.innerHTML += '<span class="role-chip admin">ADMIN</span>';
-      if (isFoundry) rolesEl.innerHTML += '<span class="role-chip foundry">FOUNDRY</span>';
-      if (!isAdmin && !isFoundry) {
-        rolesEl.innerHTML = '<span class="role-chip">No roles</span>';
-        document.getElementById('noRoleWarn').style.display = 'block';
-      } else {
-        document.getElementById('noRoleWarn').style.display = 'none';
-      }
-
+      await updateWalletUI();
       showToast(`Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`, 'success');
-      await loadStats();
-      await loadDashboard();
+      
+      await loadStatsMfg();
+      await loadStatsHeat();
+      await loadHeatDashboard();
     } catch(e) {
       showToast(e.message, 'error');
     }
@@ -708,18 +1179,80 @@
     document.getElementById('connectBtn').classList.remove('connected');
     document.getElementById('switchBtn').style.display = 'none';
     document.getElementById('walletStatus').style.display = 'none';
-    signer = null; contract = null; userAddress = null;
+    signer = null; contractMfg = null; contractHeat = null; userAddress = null;
   }
 
-  // ─── STATS ────────────────────────────────────────────────────────────
-  async function loadStats() {
+  async function updateWalletUI() {
+    if (!userAddress) {
+      document.getElementById('walletStatus').style.display = 'none';
+      return;
+    }
+    document.getElementById('walletStatus').style.display = 'flex';
+    document.getElementById('wsAddr').textContent = userAddress;
+
+    const rolesEl = document.getElementById('wsRoles');
+    rolesEl.innerHTML = '';
+    const noRoleWarn = document.getElementById('noRoleWarn');
+
+    if (systemMode === 'mfg') {
+      try {
+        const rc = contractMfg || publicContractMfg;
+        if (!rc) return;
+        const roles = await rc.getRoles(userAddress);
+        const hasAnyRole = roles.admin || roles.foundry || roles.oem || roles.mro || roles.machining || roles.carbonReporter;
+        if (roles.admin)          rolesEl.innerHTML += '<span class="role-chip admin">ADMIN</span>';
+        if (roles.foundry)        rolesEl.innerHTML += '<span class="role-chip foundry">FOUNDRY</span>';
+        if (roles.oem)            rolesEl.innerHTML += '<span class="role-chip oem">OEM</span>';
+        if (roles.mro)            rolesEl.innerHTML += '<span class="role-chip mro">MRO</span>';
+        if (roles.carbonReporter) rolesEl.innerHTML += '<span class="role-chip carbon">CARBON_REPORTER</span>';
+        if (!hasAnyRole) {
+          rolesEl.innerHTML = '<span class="role-chip">No roles</span>';
+          noRoleWarn.style.display = 'block';
+          noRoleWarn.textContent = "⚠️ No roles on Manufacturing DPP — connect deployer wallet to mint";
+        } else {
+          noRoleWarn.style.display = 'none';
+        }
+      } catch(e) {
+        console.warn('Mfg roles query failed:', e.message);
+      }
+    } else {
+      try {
+        const rc = contractHeat || publicContractHeat;
+        if (!rc) return;
+        const [isFoundry, isAdmin] = await rc.getRoles(userAddress);
+        if (isAdmin)   rolesEl.innerHTML += '<span class="role-chip admin">ADMIN</span>';
+        if (isFoundry) rolesEl.innerHTML += '<span class="role-chip foundry">FOUNDRY</span>';
+        if (!isAdmin && !isFoundry) {
+          rolesEl.innerHTML = '<span class="role-chip">No roles</span>';
+          noRoleWarn.style.display = 'block';
+          noRoleWarn.textContent = "⚠️ No roles on Heat Batch NFT — connect deployer wallet to mint";
+        } else {
+          noRoleWarn.style.display = 'none';
+        }
+      } catch(e) {
+        console.warn('Heat roles query failed:', e.message);
+      }
+    }
+  }
+
+  // ─── STATS LOADERS ────────────────────────────────────────────────────
+  async function loadStatsMfg() {
     try {
-      const rc = publicContract || contract;
+      const rc = publicContractMfg || contractMfg;
+      if (!rc) return;
+      const [name, symbol] = await Promise.all([rc.name(), rc.symbol()]);
+      document.getElementById('statName').textContent = name;
+      document.getElementById('statSymbol').textContent = symbol;
+    } catch(e) { console.warn('Mfg stats load failed:', e.message); }
+  }
+
+  async function loadStatsHeat() {
+    try {
+      const rc = publicContractHeat || contractHeat;
       if (!rc) return;
       const total = await rc.totalMinted();
       document.getElementById('statTotal').textContent = total.toString();
 
-      // Load recent to compute stats
       if (Number(total) > 0) {
         const ids = await rc.getRecentTokenIds(Math.min(Number(total), 50));
         let clean = 0, totalQ = 0;
@@ -732,11 +1265,185 @@
         document.getElementById('statClean').textContent = clean;
         document.getElementById('statAvgQ').textContent  = (totalQ / ids.length).toFixed(0);
       }
-    } catch(e) { console.warn('Stats error:', e.message); }
+    } catch(e) { console.warn('Heat stats load failed:', e.message); }
   }
 
-  // ─── DASHBOARD ────────────────────────────────────────────────────────
-  async function loadDashboard() {
+  // ─── MANUFACTURING DPP OPERATIONS ─────────────────────────────────────
+  async function lookupToken() {
+    const id = document.getElementById('lookupId').value.trim();
+    if (!id) return showResult('lookupResult', 'Please enter a token ID', 'error');
+
+    showResult('lookupResult', '⏳ Loading token data...', 'loading');
+    document.getElementById('tokenCard').style.display = 'none';
+
+    try {
+      const rc = publicContractMfg || contractMfg;
+      const exists = await rc.exists(BigInt(id));
+      if (!exists) return showResult('lookupResult', `❌ Token #${id} does not exist`, 'error');
+
+      const info = await rc.getTokenInfo(BigInt(id));
+      const [owner, stage, uri, parent, childCount] = [info[0], Number(info[1]), info[2], Number(info[3]), Number(info[4])];
+
+      // Update timeline dots
+      for (let i = 0; i <= 4; i++) {
+        const dot = document.getElementById(`lc${i}`);
+        dot.classList.remove('active', 'done');
+        if (i < stage) dot.classList.add('done');
+        if (i === stage) dot.classList.add('active');
+      }
+
+      // Update card values
+      document.getElementById('tcId').textContent = `#${id}`;
+      document.getElementById('tcOwner').textContent = owner;
+      document.getElementById('tcParent').textContent = parent === 0 ? 'None (root equipment)' : `#${parent}`;
+      document.getElementById('tcChildren').textContent = childCount;
+      document.getElementById('tcType').textContent = parent === 0 ? '⚙️ Equipment' : '🔩 Part';
+      document.getElementById('tcUri').textContent = uri || 'No URI set';
+
+      const stageBadge = document.getElementById('tcStageBadge');
+      stageBadge.textContent = STAGE_EMOJIS[stage] + ' ' + STAGES[stage];
+      stageBadge.className = `stage-badge stage-${stage}`;
+
+      document.getElementById('tcEtherscan').href = `https://sepolia.etherscan.io/token/${CONTRACT_ADDRESS_MFG}?a=${id}`;
+      document.getElementById('tokenCard').style.display = 'block';
+      showResult('lookupResult', `✅ Token #${id} found — Stage: ${STAGES[stage]}`, 'success');
+    } catch(e) {
+      showResult('lookupResult', `Error: ${e.message}`, 'error');
+    }
+  }
+
+  async function mintEquipment() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const to = document.getElementById('mintTo').value.trim() || userAddress;
+    const eqId = document.getElementById('mintEqId').value.trim();
+    const uri = document.getElementById('mintUri').value.trim() || 'ipfs://placeholder';
+    if (!eqId) return showResult('mintResult', 'Please enter an Equipment ID', 'error');
+
+    showResult('mintResult', '⏳ Sending transaction...', 'loading');
+    try {
+      const tx = await contractMfg.mintEquipment(to, BigInt(eqId), uri);
+      showResult('mintResult', `⏳ Tx sent: ${tx.hash}\nWaiting for confirmation...`, 'loading');
+      const receipt = await tx.wait();
+      showResult('mintResult', `✅ Equipment #${eqId} minted!\nTx: ${receipt.hash}\nBlock: ${receipt.blockNumber}`, 'success');
+      showToast(`Equipment #${eqId} minted successfully!`, 'success');
+    } catch(e) {
+      showResult('mintResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  async function mintPart() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const to = document.getElementById('partTo').value.trim() || userAddress;
+    const partId = document.getElementById('partId').value.trim();
+    const parentId = document.getElementById('partParentId').value.trim();
+    const uri = document.getElementById('partUri').value.trim() || 'ipfs://placeholder';
+    if (!partId || !parentId) return showResult('partResult', 'Please fill in Part ID and Parent Equipment ID', 'error');
+
+    showResult('partResult', '⏳ Sending transaction...', 'loading');
+    try {
+      const tx = await contractMfg.mintPart(to, BigInt(partId), BigInt(parentId), uri);
+      showResult('partResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
+      const receipt = await tx.wait();
+      showResult('partResult', `✅ Part #${partId} minted (child of Equipment #${parentId})!\nTx: ${receipt.hash}`, 'success');
+      showToast(`Part #${partId} minted!`, 'success');
+    } catch(e) {
+      showResult('partResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  async function updateStage() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const tokenId = document.getElementById('stageTokenId').value.trim();
+    const stage = document.getElementById('stageSelect').value;
+    const hashInput = document.getElementById('stageHash').value.trim();
+    const hash = hashInput || ethers.keccak256(ethers.toUtf8Bytes(`stage-${Date.now()}`));
+    if (!tokenId) return showResult('stageResult', 'Please enter a Token ID', 'error');
+
+    showResult('stageResult', '⏳ Sending transaction...', 'loading');
+    try {
+      const tx = await contractMfg.updateLifecycleStage(BigInt(tokenId), Number(stage), hash);
+      showResult('stageResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
+      const receipt = await tx.wait();
+      showResult('stageResult', `✅ Token #${tokenId} advanced to "${STAGES[stage]}"!\nTx: ${receipt.hash}`, 'success');
+      showToast(`Stage updated to ${STAGES[stage]}!`, 'success');
+    } catch(e) {
+      showResult('stageResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  async function addCertification() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const tokenId = document.getElementById('certTokenId').value.trim();
+    const certType = document.getElementById('certType').value;
+    const docHash = document.getElementById('certDocHash').value.trim() || 'ipfs://cert-placeholder';
+    const notHash = document.getElementById('certNotHash').value.trim() || ethers.keccak256(ethers.toUtf8Bytes(`cert-${Date.now()}`));
+    if (!tokenId) return showResult('certResult', 'Please enter a Token ID', 'error');
+
+    showResult('certResult', '⏳ Sending transaction...', 'loading');
+    try {
+      const tx = await contractMfg.addCertification(BigInt(tokenId), certType, docHash, notHash);
+      showResult('certResult', `⏳ Tx sent: ${tx.hash}`, 'loading');
+      const receipt = await tx.wait();
+      showResult('certResult', `✅ "${certType}" certification added to Token #${tokenId}!\nTx: ${receipt.hash}`, 'success');
+      showToast(`${certType} certification added!`, 'success');
+    } catch(e) {
+      showResult('certResult', `Error: ${e.reason || e.message}`, 'error');
+    }
+  }
+
+  async function mintCarbonNFT() {
+    if (!signer) return showToast("Connect MetaMask first", "error");
+    const tokenId  = document.getElementById('carbonTokenId').value.trim();
+    const linkedId = document.getElementById('carbonLinkedId').value.trim() || '0';
+    const energy   = document.getElementById('carbonEnergy').value.trim();
+    const co2      = document.getElementById('carbonCO2').value.trim();
+    const score    = document.getElementById('carbonScore').value.trim();
+    const period   = document.getElementById('carbonPeriod').value.trim() || 'Batch-001';
+    const uri      = document.getElementById('carbonUri').value.trim() || 'ipfs://carbon-placeholder';
+    if (!tokenId || !energy || !co2 || !score) return showResult('carbonResult','Fill in Token ID, Energy, CO₂ and Score','error');
+    if (Number(score) > 100) return showResult('carbonResult','Score must be 0–100','error');
+
+    showResult('carbonResult','⏳ Sending transaction...','loading');
+    try {
+      const tx = await contractMfg.mintCarbonNFT(
+        userAddress, BigInt(tokenId), BigInt(linkedId),
+        BigInt(energy), BigInt(co2), Number(score), period, uri
+      );
+      showResult('carbonResult',`⏳ Tx sent: ${tx.hash}`,'loading');
+      const receipt = await tx.wait();
+      showResult('carbonResult',`✅ Carbon NFT #${tokenId} minted!\nEnergy: ${(Number(energy)/1000).toFixed(1)} kWh | CO₂: ${(Number(co2)/1000).toFixed(1)} kg | Score: ${score}/100\nTx: ${receipt.hash}`,'success');
+      showToast(`Carbon NFT #${tokenId} minted! 🌿`,'success');
+    } catch(e) {
+      showResult('carbonResult',`Error: ${e.reason || e.message}`,'error');
+    }
+  }
+
+  async function lookupCarbonNFT() {
+    const tokenId = document.getElementById('carbonTokenId').value.trim();
+    if (!tokenId) return showResult('carbonResult','Enter a Token ID','error');
+    showResult('carbonResult','⏳ Reading carbon data...','loading');
+    document.getElementById('carbonDataCard').style.display = 'none';
+    try {
+      const rc = publicContractMfg || contractMfg;
+      const tType = await rc.tokenType(BigInt(tokenId));
+      if (Number(tType) !== 2) return showResult('carbonResult',`Token #${tokenId} is not a Carbon NFT (type=${tType})`,'error');
+      const data = await rc.getCarbonData(BigInt(tokenId));
+      const [energyWh, co2Grams, score, period, linked, lastUpdated] = data;
+      document.getElementById('cdEnergy').textContent  = `${(Number(energyWh)/1000).toFixed(1)} kWh (${Number(energyWh).toLocaleString()} Wh)`;
+      document.getElementById('cdCO2').textContent     = `${(Number(co2Grams)/1000).toFixed(1)} kg (${Number(co2Grams).toLocaleString()} g)`;
+      document.getElementById('cdScore').textContent   = `${score}/100 ${'🟢'.repeat(Math.round(score/20))}`;
+      document.getElementById('cdPeriod').textContent  = period;
+      document.getElementById('cdLinked').textContent  = Number(linked) === 0 ? 'Standalone' : `Equipment #${linked}`;
+      document.getElementById('cdUpdated').textContent = new Date(Number(lastUpdated)*1000).toLocaleString();
+      document.getElementById('carbonDataCard').style.display = 'block';
+      showResult('carbonResult',`✅ Carbon NFT #${tokenId} data loaded`,'success');
+    } catch(e) {
+      showResult('carbonResult',`Error: ${e.reason || e.message}`,'error');
+    }
+  }
+
+  // ─── HEAT BATCH NFT OPERATIONS ────────────────────────────────────────
+  async function loadHeatDashboard() {
     const loading = document.getElementById('dashboardLoading');
     const grid    = document.getElementById('nftGrid');
     const empty   = document.getElementById('dashboardEmpty');
@@ -744,7 +1451,7 @@
     loading.style.display = 'block'; grid.style.display = 'none'; empty.style.display = 'none';
 
     try {
-      const rc = publicContract || contract;
+      const rc = publicContractHeat || contractHeat;
       if (!rc) { loading.style.display = 'none'; empty.style.display = 'block'; return; }
 
       const total = await rc.totalMinted();
@@ -760,7 +1467,6 @@
         return { tokenId: Number(id), batch: b, owner };
       }));
 
-      // Reverse for newest first
       dashboardData = batches.reverse();
       renderCards(dashboardData);
       loading.style.display = 'none';
@@ -786,7 +1492,6 @@
       const q  = Number(b.qualityScore);
       const qc = q >= 80 ? 'q-high' : q >= 60 ? 'q-medium' : 'q-low';
       const d  = b.defects;
-      const hasDefect = d[0] || d[1] || d[2] || d[3];
       const ts = new Date(Number(b.mintTimestamp) * 1000).toLocaleDateString();
       const pp = b.processParams;
       return `
@@ -829,7 +1534,7 @@
     const q = document.getElementById('searchInput').value.trim();
     if (!q) { renderCards(dashboardData); return; }
     try {
-      const rc = publicContract || contract;
+      const rc = publicContractHeat || contractHeat;
       if (!rc) return;
       const tokenId = await rc.getTokenIdByHeatNo(q);
       if (Number(tokenId) === 0) { showToast(`Heat number "${q}" not found`, 'error'); return; }
@@ -837,7 +1542,6 @@
     } catch(e) { showToast(e.message, 'error'); }
   }
 
-  // ─── DETAIL MODAL ─────────────────────────────────────────────────────
   async function showDetail(tokenId) {
     const modal = document.getElementById('detailModal');
     const content = document.getElementById('modalContent');
@@ -845,7 +1549,7 @@
     modal.classList.add('open');
 
     try {
-      const rc = publicContract || contract;
+      const rc = publicContractHeat || contractHeat;
       const b  = await rc.getHeatBatch(tokenId);
       const owner = await rc.ownerOf(tokenId);
       const uri = await rc.tokenURI(tokenId);
@@ -856,14 +1560,6 @@
       const d   = b.defects;
       const ts  = new Date(Number(b.mintTimestamp) * 1000).toLocaleString();
 
-      // Decode base64 URI
-      let metadata = {};
-      try {
-        const base64 = uri.replace('data:application/json;base64,', '');
-        metadata = JSON.parse(atob(base64));
-      } catch {}
-
-      // Max Al for chart scaling (usually ~90%)
       const chemVals = [
         { el:'Si', val:Number(cc[0])/100 },
         { el:'Fe', val:Number(cc[1])/100 },
@@ -894,7 +1590,6 @@
           <div class="quality-badge ${qc}" style="font-size:24px;padding:12px 20px;">${q}<span style="font-size:14px;">/100</span></div>
         </div>
 
-        <!-- Lifecycle Timeline -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px;">Lifecycle</div>
         <div class="timeline">
           <div class="tl-step"><div class="tl-dot done">🏭</div><div class="tl-label done">Manufacturing</div></div>
@@ -906,7 +1601,6 @@
           <div class="tl-step"><div class="tl-dot">✅</div><div class="tl-label">Verified</div></div>
         </div>
 
-        <!-- Process Parameters -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px;margin-top:20px;">Process Parameters</div>
         <div class="detail-grid">
           <div class="detail-field"><div class="detail-label">Pouring Temperature</div><div class="detail-value">${pp[0]} °C</div></div>
@@ -917,11 +1611,9 @@
           <div class="detail-field"><div class="detail-label">Process Duration</div><div class="detail-value">${pp[5]} min</div></div>
         </div>
 
-        <!-- Chemical Composition -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:12px;margin-top:20px;">Chemical Composition</div>
         <div class="chem-grid">${chemBars}</div>
 
-        <!-- Defects -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:12px;margin-top:20px;">Defect Analysis</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <div style="padding:12px 16px;border-radius:10px;background:${d[0]?'var(--red-dim)':'var(--green-dim)'};border:1px solid ${d[0]?'rgba(239,68,68,.3)':'rgba(16,185,129,.3)'};">
@@ -942,17 +1634,16 @@
           </div>
         </div>
 
-        <!-- Ownership -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:12px;margin-top:20px;">Ownership & Chain</div>
         <div class="detail-grid">
           <div class="detail-field"><div class="detail-label">Owner Address</div><div class="detail-value">${owner}</div></div>
           <div class="detail-field"><div class="detail-label">Minted At</div><div class="detail-value">${ts}</div></div>
-          <div class="detail-field"><div class="detail-label">Contract</div><div class="detail-value">${CONTRACT_ADDRESS.slice(0,18)}...</div></div>
+          <div class="detail-field"><div class="detail-label">Contract</div><div class="detail-value">${CONTRACT_ADDRESS_HEAT.slice(0,18)}...</div></div>
           <div class="detail-field"><div class="detail-label">Network</div><div class="detail-value">Ethereum Sepolia</div></div>
         </div>
 
         <div style="margin-top:20px;display:flex;gap:10px;">
-          <a href="https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}" target="_blank" class="btn btn-secondary" style="text-decoration:none;font-family:var(--font);font-size:13px;padding:10px 20px;">View on Etherscan ↗</a>
+          <a href="https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS_HEAT}" target="_blank" class="btn btn-secondary" style="text-decoration:none;font-family:var(--font);font-size:13px;padding:10px 20px;">View on Etherscan ↗</a>
           <button class="btn btn-secondary" onclick="copyToClipboard('${uri.slice(0,50)}...')">📋 Copy Token URI</button>
         </div>`;
     } catch(e) {
@@ -964,7 +1655,6 @@
     document.getElementById('detailModal').classList.remove('open');
   }
 
-  // ─── MINT ─────────────────────────────────────────────────────────────
   async function mintHeatBatch() {
     if (!signer) return showToast('Connect MetaMask first', 'error');
 
@@ -972,9 +1662,9 @@
     const mfg      = document.getElementById('m_manufacturer').value.trim();
     const score    = parseInt(document.getElementById('m_qualityScore').value);
 
-    if (!heatNo) return showResult('mintResult', 'Heat number is required', 'error');
-    if (!mfg)   return showResult('mintResult', 'Manufacturer name is required', 'error');
-    if (isNaN(score) || score < 0 || score > 100) return showResult('mintResult', 'Quality score must be 0-100', 'error');
+    if (!heatNo) return showResult('mintHeatResult', 'Heat number is required', 'error');
+    if (!mfg)   return showResult('mintHeatResult', 'Manufacturer name is required', 'error');
+    if (isNaN(score) || score < 0 || score > 100) return showResult('mintHeatResult', 'Quality score must be 0-100', 'error');
 
     const pp = [
       parseInt(document.getElementById('m_pouringTemp').value)       || 0,
@@ -985,7 +1675,6 @@
       parseInt(document.getElementById('m_processDuration').value)   || 0,
     ];
 
-    // Chemical composition: multiply by 100 for 2 decimal precision
     const cc = [
       Math.round((parseFloat(document.getElementById('m_si').value) || 0) * 100),
       Math.round((parseFloat(document.getElementById('m_fe').value) || 0) * 100),
@@ -1004,16 +1693,15 @@
       document.getElementById('m_slagInclusion').checked,
     ];
 
-    showResult('mintResult', '⏳ Sending transaction — confirm in MetaMask...', 'loading');
+    showResult('mintHeatResult', '⏳ Sending transaction — confirm in MetaMask...', 'loading');
     try {
-      const tx = await contract.mintHeatBatch(userAddress, heatNo, mfg, pp, cc, di, score);
-      showResult('mintResult', `⏳ Transaction sent: ${tx.hash}\nWaiting for confirmation...`, 'loading');
+      const tx = await contractHeat.mintHeatBatch(userAddress, heatNo, mfg, pp, cc, di, score);
+      showResult('mintHeatResult', `⏳ Transaction sent: ${tx.hash}\nWaiting for confirmation...`, 'loading');
       const receipt = await tx.wait();
 
-      // Parse tokenId from logs
       let tokenId = '?';
       try {
-        const iface = new ethers.Interface(ABI);
+        const iface = new ethers.Interface(ABI_HEAT);
         for (const log of receipt.logs) {
           try {
             const parsed = iface.parseLog(log);
@@ -1022,58 +1710,50 @@
         }
       } catch {}
 
-      showResult('mintResult',
+      showResult('mintHeatResult',
         `✅ Heat Batch NFT Minted!\n\nHeat Number: ${heatNo}\nToken ID: ${tokenId}\nQuality Score: ${score}/100\nTx Hash: ${receipt.hash}`,
         'success'
       );
       showToast(`Heat Batch #${heatNo} minted! Token #${tokenId}`, 'success');
       clearForm();
-      await loadStats();
-      await loadDashboard();
+      await loadStatsHeat();
+      await loadHeatDashboard();
     } catch(e) {
-      showResult('mintResult', `Error: ${e.reason || e.message}`, 'error');
+      showResult('mintHeatResult', `Error: ${e.reason || e.message}`, 'error');
     }
   }
 
-  // ─── LOOKUP ───────────────────────────────────────────────────────────
   async function lookupByHeatNo() {
     const heatNo = document.getElementById('lookupHeatNo').value.trim();
-    if (!heatNo) return showResult('lookupResult', 'Enter a heat number', 'error');
-    showResult('lookupResult', '⏳ Searching...', 'loading');
+    if (!heatNo) return showResult('lookupHeatResult', 'Enter a heat number', 'error');
+    showResult('lookupHeatResult', '⏳ Searching...', 'loading');
     try {
-      const rc = publicContract || contract;
+      const rc = publicContractHeat || contractHeat;
       const tokenId = await rc.getTokenIdByHeatNo(heatNo);
-      if (Number(tokenId) === 0) return showResult('lookupResult', `Heat number "${heatNo}" not found`, 'error');
-      showResult('lookupResult', `Found → Token ID: ${tokenId}\nOpening detail view...`, 'success');
+      if (Number(tokenId) === 0) return showResult('lookupHeatResult', `Heat number "${heatNo}" not found`, 'error');
+      showResult('lookupHeatResult', `Found → Token ID: ${tokenId}\nOpening detail view...`, 'success');
       setTimeout(() => showDetail(Number(tokenId)), 500);
     } catch(e) {
-      showResult('lookupResult', `Error: ${e.reason || e.message}`, 'error');
+      showResult('lookupHeatResult', `Error: ${e.reason || e.message}`, 'error');
     }
   }
 
   async function lookupByTokenId() {
     const tokenId = document.getElementById('lookupTokenId').value.trim();
-    if (!tokenId) return showResult('lookupResult', 'Enter a token ID', 'error');
-    showResult('lookupResult', '⏳ Loading...', 'loading');
+    if (!tokenId) return showResult('lookupHeatResult', 'Enter a token ID', 'error');
+    showResult('lookupHeatResult', '⏳ Loading...', 'loading');
     try {
-      const rc = publicContract || contract;
+      const rc = publicContractHeat || contractHeat;
       const exists = await rc.exists(BigInt(tokenId));
-      if (!exists) return showResult('lookupResult', `Token #${tokenId} does not exist`, 'error');
-      showResult('lookupResult', `Token #${tokenId} exists — opening detail view...`, 'success');
+      if (!exists) return showResult('lookupHeatResult', `Token #${tokenId} does not exist`, 'error');
+      showResult('lookupHeatResult', `Token #${tokenId} exists — opening detail view...`, 'success');
       setTimeout(() => showDetail(Number(tokenId)), 500);
     } catch(e) {
-      showResult('lookupResult', `Error: ${e.reason || e.message}`, 'error');
+      showResult('lookupHeatResult', `Error: ${e.reason || e.message}`, 'error');
     }
   }
 
   // ─── HELPERS ──────────────────────────────────────────────────────────
-  function switchTab(name) {
-    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    document.getElementById('panel-' + name).classList.add('active');
-  }
-
   function showResult(id, msg, type) {
     const el = document.getElementById(id);
     el.textContent = msg;
@@ -1115,7 +1795,7 @@
     document.getElementById('m_roughSurface').checked = false;
     document.getElementById('m_shrinkage').checked = false;
     document.getElementById('m_slagInclusion').checked = false;
-    showToast('Sample data from dataset row filled!', 'info');
+    showToast('Sample data filled!', 'info');
   }
 
   function clearForm() {
@@ -1129,7 +1809,7 @@
       const el = document.getElementById(id);
       if (el) el.checked = false;
     });
-    const r = document.getElementById('mintResult');
+    const r = document.getElementById('mintHeatResult');
     r.textContent = ''; r.style.display = 'none';
   }
 
