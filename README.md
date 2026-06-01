@@ -7,6 +7,7 @@
 
 > 🚀 **Live Portal Frontend:** [iota-dpp.vercel.app](https://iota-dpp.vercel.app)  
 > 🔗 **Network:** Ethereum Sepolia Testnet | **Chain ID:** 11155111  
+> 📋 **TraceabilityPortal Explorer:** [View on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x8C6e7e14958658b2559c689734Df50b626BFD69A)  
 > 📖 **Architecture & Deep Dive Documentation:** [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md)
 
 ---
@@ -33,14 +34,14 @@ This architecture records and links workers, machinery telemetry, calibrations, 
 
 | Contract | Address | Description |
 |---|---|---|
-| 🛡️ **TraceabilityPortal (Portal)** | `0x8C6e7e14958658b2559c689734Df50b626BFD69A` | Central gateway for mints and passport lookups. |
-| ⚙️ **EquipmentNFT** | `0x53F3cB642E2985fb7fE97a96788c7457B19d8a55` | Machinery asset telemetry & calibration. |
-| 👤 **ManpowerNFT** | `0xa0e928EC402466c27E36aAAc4Fae9DC8dAf0743d` | Operator qualification & signatures. |
-| ⛓ **ProcessNFT** | `0xE04Ac7A16f060596148e52264ccf960b24bAC780` | Melt casting process parameters. |
-| 🔩 **ProductNFT** | `0x305e2de338AE963E88747CF5d36f02106766Ee19` | Final physical casting component passport. |
-| 📜 **QualityNFT** | `0xbF723D781f6e799e7d9F3f1D4D0B0a86FEe93e6a` | NDT QA score and AI defect model logs. |
-| 🔧 **MaintenanceNFT** | `0x97B739a219bA5E247fD68aB178353965f313b171` | Preventive care & downtime logs. |
-| 💼 **BusinessNFT** | `0x1F060B42De10B29eFf7b837E85F621a650EBFC44` | Commercial order POs and logistics trail. |
+| 🛡️ **TraceabilityPortal (Portal)** | [`0x8C6e7e14958658b2559c689734Df50b626BFD69A`](https://sepolia.etherscan.io/address/0x8C6e7e14958658b2559c689734Df50b626BFD69A) | Central gateway for mints and passport lookups. |
+| ⚙️ **EquipmentNFT** | [`0x53F3cB642E2985fb7fE97a96788c7457B19d8a55`](https://sepolia.etherscan.io/address/0x53F3cB642E2985fb7fE97a96788c7457B19d8a55) | Machinery asset telemetry & calibration. |
+| 👤 **ManpowerNFT** | [`0xa0e928EC402466c27E36aAAc4Fae9DC8dAf0743d`](https://sepolia.etherscan.io/address/0xa0e928EC402466c27E36aAAc4Fae9DC8dAf0743d) | Operator qualification & signatures. |
+| ⛓ **ProcessNFT** | [`0xE04Ac7A16f060596148e52264ccf960b24bAC780`](https://sepolia.etherscan.io/address/0xE04Ac7A16f060596148e52264ccf960b24bAC780) | Melt casting process parameters. |
+| 🔩 **ProductNFT** | [`0x305e2de338AE963E88747CF5d36f02106766Ee19`](https://sepolia.etherscan.io/address/0x305e2de338AE963E88747CF5d36f02106766Ee19) | Final physical casting component passport. |
+| 📜 **QualityNFT** | [`0xbF723D781f6e799e7d9F3f1D4D0B0a86FEe93e6a`](https://sepolia.etherscan.io/address/0xbF723D781f6e799e7d9F3f1D4D0B0a86FEe93e6a) | NDT QA score and AI defect model logs. |
+| 🔧 **MaintenanceNFT** | [`0x97B739a219bA5E247fD68aB178353965f313b171`](https://sepolia.etherscan.io/address/0x97B739a219bA5E247fD68aB178353965f313b171) | Preventive care & downtime logs. |
+| 💼 **BusinessNFT** | [`0x1F060B42De10B29eFf7b837E85F621a650EBFC44`](https://sepolia.etherscan.io/address/0x1F060B42De10B29eFf7b837E85F621a650EBFC44) | Commercial order POs and logistics trail. |
 
 ---
 
