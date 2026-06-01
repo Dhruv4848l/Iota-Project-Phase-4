@@ -233,4 +233,15 @@ contract TraceabilityPortal is AccessControl {
             hasRole(COMMERCIAL_ROLE, account)
         );
     }
+
+    /**
+     * @dev Overridden to bypass role restrictions when running on local Anvil (chain ID 31337)
+     * so that anyone connecting a wallet locally automatically has all roles.
+     */
+    function hasRole(bytes32 role, address account) public view override returns (bool) {
+        if (block.chainid == 31337) {
+            return true;
+        }
+        return super.hasRole(role, account);
+    }
 }
