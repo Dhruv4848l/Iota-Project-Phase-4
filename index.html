@@ -344,6 +344,7 @@
     <!-- STATS AND LIVE STATUS BAR -->
     <div class="stats-header-bar">
       <div class="stat-badge">Network:<strong id="networkBadge">Sepolia Testnet</strong></div>
+      <button id="networkToggleBtn" class="btn-network-toggle" style="background:var(--accent-color);border:none;border-radius:4px;color:black;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer;transition:all 0.2s;outline:none;display:inline-flex;align-items:center;height:24px;">Switch Network</button>
       <div class="stat-badge">Portal Contract:<strong id="portalAddressBadge">0x8C6e...D69A</strong></div>
     </div>
 
@@ -1115,6 +1116,43 @@
     document.getElementById('networkBadge').textContent = config.name;
     document.getElementById('portalAddressBadge').textContent = `${config.portal.slice(0, 6)}...${config.portal.slice(-4)}`;
     document.getElementById('footerChainBadge').textContent = config.fullName;
+
+    const btn = document.getElementById('networkToggleBtn');
+    if (btn) {
+      if (ACTIVE_CHAIN === "0x7a69") {
+        btn.textContent = "Switch to Sepolia Testnet";
+        btn.onclick = () => switchNetworkTo("0xaa36a7");
+      } else {
+        btn.textContent = "Switch to Local Anvil";
+        btn.onclick = () => switchNetworkTo("0x7a69");
+      }
+    }
+  }
+
+  async function switchNetworkTo(targetChainId) {
+    if (!window.ethereum) return showToast("MetaMask wallet extension not detected", "error");
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: targetChainId }]
+      });
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        const cfg = CONFIGS[targetChainId];
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: targetChainId,
+            chainName: cfg.fullName,
+            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+            rpcUrls: [cfg.rpc],
+            blockExplorerUrls: targetChainId === SEPOLIA_CHAIN_ID ? ['https://sepolia.etherscan.io'] : []
+          }]
+        });
+      } else {
+        showToast(`Error switching to ${CONFIGS[targetChainId].name}`, "error");
+      }
+    }
   }
 
   function initPublicPortal() {
