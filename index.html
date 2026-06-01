@@ -343,8 +343,8 @@
     
     <!-- STATS AND LIVE STATUS BAR -->
     <div class="stats-header-bar">
-      <div class="stat-badge">Network:<strong>Sepolia Testnet</strong></div>
-      <div class="stat-badge">Portal Contract:<strong>0x8C6e...D69A</strong></div>
+      <div class="stat-badge">Network:<strong id="networkBadge">Sepolia Testnet</strong></div>
+      <div class="stat-badge">Portal Contract:<strong id="portalAddressBadge">0x8C6e...D69A</strong></div>
     </div>
 
     <!-- TOAST PORT -->
@@ -1030,7 +1030,7 @@
 
     <!-- Footer Specs -->
     <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--border-color);font-size:11px;color:var(--text-dim);line-height:1.6;">
-      <div>Chain ID: <strong>Sepolia (11155111)</strong></div>
+      <div>Chain ID: <strong id="footerChainBadge">Sepolia (11155111)</strong></div>
       <div>Platform v3.0 (Decoupled Architecture)</div>
     </div>
 
@@ -1040,10 +1040,28 @@
 
 <!-- ─── JAVASCRIPT LOGIC ────────────────────────────── -->
 <script>
-  // ─── CONTRACT ADDRESSES ───
-  const PORTAL_ADDRESS = "0x8C6e7e14958658b2559c689734Df50b626BFD69A";
+  // ─── CONTRACT CONFIGS ───
+  const CONFIGS = {
+    // Sepolia (default)
+    "0xaa36a7": {
+      portal: "0x8C6e7e14958658b2559c689734Df50b626BFD69A",
+      rpc: "https://sepolia.drpc.org",
+      name: "Sepolia Testnet",
+      fullName: "Sepolia (11155111)"
+    },
+    // Local Anvil
+    "0x7a69": {
+      portal: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      rpc: "http://localhost:8545",
+      name: "Anvil Localhost",
+      fullName: "Anvil Localhost (31337)"
+    }
+  };
+
   const SEPOLIA_CHAIN_ID = "0xaa36a7";
-  const RPC = "https://sepolia.drpc.org";
+  let ACTIVE_CHAIN = "0xaa36a7";
+  let PORTAL_ADDRESS = CONFIGS[ACTIVE_CHAIN].portal;
+  let RPC = CONFIGS[ACTIVE_CHAIN].rpc;
 
   const ABI_PORTAL = [
     "function getRoles(address account) view returns (bool admin, bool foundry, bool oem, bool supervisor, bool inspector, bool commercial)",
@@ -1064,12 +1082,8 @@
 
   // ─── INIT ───
   document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const pubProvider = new ethers.JsonRpcProvider(RPC);
-      publicPortal = new ethers.Contract(PORTAL_ADDRESS, ABI_PORTAL, pubProvider);
-    } catch(e) {
-      console.warn("Public RPC failed:", e.message);
-    }
+    await detectNetwork();
+    initPublicPortal();
 
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accs) => {
@@ -1079,6 +1093,38 @@
       window.ethereum.on('chainChanged', () => window.location.reload());
     }
   });
+
+  async function detectNetwork() {
+    if (window.ethereum) {
+      try {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (CONFIGS[chainId]) {
+          ACTIVE_CHAIN = chainId;
+          PORTAL_ADDRESS = CONFIGS[chainId].portal;
+          RPC = CONFIGS[chainId].rpc;
+        }
+      } catch (e) {
+        console.warn("Chain detection failed, defaulting to Sepolia:", e.message);
+      }
+    }
+    updateUIBadges();
+  }
+
+  function updateUIBadges() {
+    const config = CONFIGS[ACTIVE_CHAIN];
+    document.getElementById('networkBadge').textContent = config.name;
+    document.getElementById('portalAddressBadge').textContent = `${config.portal.slice(0, 6)}...${config.portal.slice(-4)}`;
+    document.getElementById('footerChainBadge').textContent = config.fullName;
+  }
+
+  function initPublicPortal() {
+    try {
+      const pubProvider = new ethers.JsonRpcProvider(RPC);
+      publicPortal = new ethers.Contract(PORTAL_ADDRESS, ABI_PORTAL, pubProvider);
+    } catch(e) {
+      console.warn("Public RPC failed:", e.message);
+    }
+  }
 
   // ─── TAB SWITCHER ───
   function activateForm(tabId) {
@@ -1099,26 +1145,30 @@
     if (!window.ethereum) return showToast("MetaMask wallet extension not detected", "error");
     try {
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      if (chainId !== SEPOLIA_CHAIN_ID) {
+      // If already connected to a known chain (Sepolia or local Anvil), use it. Otherwise default to Sepolia.
+      const targetChain = CONFIGS[chainId] ? chainId : SEPOLIA_CHAIN_ID;
+
+      if (chainId !== targetChain) {
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: SEPOLIA_CHAIN_ID }]
+            params: [{ chainId: targetChain }]
           });
         } catch (switchError) {
           if (switchError.code === 4902) {
+            const cfg = CONFIGS[targetChain];
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
               params: [{
-                chainId: SEPOLIA_CHAIN_ID,
-                chainName: 'Ethereum Sepolia',
+                chainId: targetChain,
+                chainName: cfg.fullName,
                 nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                rpcUrls: [RPC],
-                blockExplorerUrls: ['https://sepolia.etherscan.io']
+                rpcUrls: [cfg.rpc],
+                blockExplorerUrls: targetChain === SEPOLIA_CHAIN_ID ? ['https://sepolia.etherscan.io'] : []
               }]
             });
           } else {
-            return showToast("Please configure MetaMask network to Sepolia", "error");
+            return showToast(`Please switch MetaMask network to ${CONFIGS[targetChain].name}`, "error");
           }
         }
       }
@@ -1127,6 +1177,15 @@
       provider = new ethers.BrowserProvider(window.ethereum);
       signer = await provider.getSigner();
       userAddress = await signer.getAddress();
+
+      // Recalculate config values based on connected wallet's active chain
+      const currentChain = await window.ethereum.request({ method: 'eth_chainId' });
+      if (CONFIGS[currentChain]) {
+        ACTIVE_CHAIN = currentChain;
+        PORTAL_ADDRESS = CONFIGS[currentChain].portal;
+        RPC = CONFIGS[currentChain].rpc;
+        updateUIBadges();
+      }
 
       contractPortal = new ethers.Contract(PORTAL_ADDRESS, ABI_PORTAL, signer);
 
