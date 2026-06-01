@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 80" width="900" height="80">
+  <defs>
+    <linearGradient id="footerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#020b18"/>
+      <stop offset="25%" style="stop-color:#7c3aed;stop-opacity:0.9"/>
+      <stop offset="50%" style="stop-color:#06b6d4;stop-opacity:0.9"/>
+      <stop offset="75%" style="stop-color:#a855f7;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#020b18"/>
+      <animateTransform attributeName="gradientTransform" type="translate"
+        values="-1 0;1 0;-1 0" dur="4s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="fglow" x="-5%" y="-50%" width="110%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="fgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#0d2a3d" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="80" fill="#020b18"/>
+  <rect width="900" height="80" fill="url(#fgrid)" opacity="0.7"/>
+
+  <!-- Wave shape -->
+  <path d="M0,50 C150,10 300,70 450,40 C600,10 750,60 900,30 L900,80 L0,80 Z"
+    fill="url(#footerGrad)" opacity="0.85"/>
+  <path d="M0,60 C200,30 400,65 600,45 C750,30 850,55 900,45 L900,80 L0,80 Z"
+    fill="#7c3aed" opacity="0.25">
+    <animate attributeName="d"
+      values="M0,60 C200,30 400,65 600,45 C750,30 850,55 900,45 L900,80 L0,80 Z;
+              M0,55 C180,40 380,60 580,42 C730,28 860,58 900,48 L900,80 L0,80 Z;
+              M0,60 C200,30 400,65 600,45 C750,30 850,55 900,45 L900,80 L0,80 Z"
+      dur="6s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- Top glowing line -->
+  <line x1="0" y1="2" x2="900" y2="2" stroke="url(#footerGrad)" stroke-width="2"
+    filter="url(#fglow)" opacity="0.9"/>
+
+  <!-- Pulsing dots on the line -->
+  <circle cx="200" cy="2" r="3" fill="#00f5ff" opacity="0.8" filter="url(#fglow)">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="450" cy="2" r="3" fill="#a855f7" opacity="0.8" filter="url(#fglow)">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="700" cy="2" r="3" fill="#06b6d4" opacity="0.8" filter="url(#fglow)">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" begin="1s" repeatCount="indefinite"/>
+  </circle>
+</svg>

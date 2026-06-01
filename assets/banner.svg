@@ -1,0 +1,251 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+  viewBox="0 0 900 280" width="900" height="280">
+  <defs>
+    <!-- Dark cyber background gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#020b18;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#050e1f;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#030d1a;stop-opacity:1"/>
+    </linearGradient>
+
+    <!-- Animated sweep gradient for text -->
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00f5ff"/>
+      <stop offset="30%" style="stop-color:#7c3aed"/>
+      <stop offset="60%" style="stop-color:#06b6d4"/>
+      <stop offset="100%" style="stop-color:#a855f7"/>
+      <animateTransform attributeName="gradientTransform" type="translate" values="-1 0;1 0;-1 0"
+        dur="4s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- Glow filter for text -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft glow for dots -->
+    <filter id="dotGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Strong glow for accent lines -->
+    <filter id="lineGlow" x="-10%" y="-50%" width="120%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Grid pattern texture -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#0d2a3d" stroke-width="0.6"/>
+    </pattern>
+
+    <!-- Hex dot pattern -->
+    <pattern id="dots" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="0.8" fill="#00d4ff" opacity="0.25"/>
+    </pattern>
+
+    <!-- Radial vignette -->
+    <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" style="stop-color:#00000000"/>
+      <stop offset="100%" style="stop-color:#000000cc"/>
+    </radialGradient>
+
+    <!-- Clipping -->
+    <clipPath id="roundRect">
+      <rect width="900" height="280" rx="16" ry="16"/>
+    </clipPath>
+
+    <!-- Shimmer gradient for subtitle -->
+    <linearGradient id="subGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#64748b"/>
+      <stop offset="50%" style="stop-color:#94a3b8"/>
+      <stop offset="100%" style="stop-color:#64748b"/>
+      <animateTransform attributeName="gradientTransform" type="translate" values="-1 0;1 0;-1 0"
+        dur="3s" repeatCount="indefinite"/>
+    </linearGradient>
+  </defs>
+
+  <g clip-path="url(#roundRect)">
+    <!-- Base background -->
+    <rect width="900" height="280" fill="url(#bgGrad)"/>
+
+    <!-- Grid texture -->
+    <rect width="900" height="280" fill="url(#grid)" opacity="1"/>
+
+    <!-- Dot texture overlay -->
+    <rect width="900" height="280" fill="url(#dots)" opacity="0.8"/>
+
+    <!-- Animated background pulse blobs -->
+    <ellipse cx="150" cy="60" rx="200" ry="100" fill="#7c3aed" opacity="0.06">
+      <animate attributeName="rx" values="200;260;200" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.06;0.12;0.06" dur="7s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="750" cy="220" rx="220" ry="110" fill="#06b6d4" opacity="0.07">
+      <animate attributeName="rx" values="220;280;220" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.07;0.13;0.07" dur="9s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="450" cy="140" rx="280" ry="140" fill="#0ea5e9" opacity="0.04">
+      <animate attributeName="ry" values="140;180;140" dur="11s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Circuit board lines — horizontal traces -->
+    <line x1="0" y1="80" x2="180" y2="80" stroke="#00d4ff" stroke-width="0.8" opacity="0.3" filter="url(#lineGlow)"/>
+    <line x1="180" y1="80" x2="180" y2="50" stroke="#00d4ff" stroke-width="0.8" opacity="0.3"/>
+    <line x1="180" y1="50" x2="300" y2="50" stroke="#00d4ff" stroke-width="0.8" opacity="0.3"/>
+    <circle cx="180" cy="80" r="3" fill="#00d4ff" opacity="0.5" filter="url(#dotGlow)"/>
+    <circle cx="300" cy="50" r="3" fill="#00d4ff" opacity="0.5" filter="url(#dotGlow)"/>
+
+    <line x1="900" y1="200" x2="720" y2="200" stroke="#a855f7" stroke-width="0.8" opacity="0.3" filter="url(#lineGlow)"/>
+    <line x1="720" y1="200" x2="720" y2="230" stroke="#a855f7" stroke-width="0.8" opacity="0.3"/>
+    <line x1="720" y1="230" x2="600" y2="230" stroke="#a855f7" stroke-width="0.8" opacity="0.3"/>
+    <circle cx="720" cy="200" r="3" fill="#a855f7" opacity="0.5" filter="url(#dotGlow)"/>
+    <circle cx="600" cy="230" r="3" fill="#a855f7" opacity="0.5" filter="url(#dotGlow)"/>
+
+    <line x1="0" y1="220" x2="120" y2="220" stroke="#06b6d4" stroke-width="0.6" opacity="0.25"/>
+    <line x1="120" y1="220" x2="120" y2="250" stroke="#06b6d4" stroke-width="0.6" opacity="0.25"/>
+    <line x1="120" y1="250" x2="240" y2="250" stroke="#06b6d4" stroke-width="0.6" opacity="0.25"/>
+
+    <line x1="900" y1="60" x2="820" y2="60" stroke="#7c3aed" stroke-width="0.6" opacity="0.25"/>
+    <line x1="820" y1="60" x2="820" y2="30" stroke="#7c3aed" stroke-width="0.6" opacity="0.25"/>
+    <line x1="820" y1="30" x2="680" y2="30" stroke="#7c3aed" stroke-width="0.6" opacity="0.25"/>
+
+    <!-- Animated scanning line -->
+    <rect x="0" y="0" width="4" height="280" fill="url(#titleGrad)" opacity="0.4">
+      <animateTransform attributeName="transform" type="translate" values="-4 0;904 0;-4 0"
+        dur="5s" repeatCount="indefinite" calcMode="linear"/>
+    </rect>
+
+    <!-- Floating particles -->
+    <circle cx="60" cy="40" r="1.5" fill="#00f5ff" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="3s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="40;20;40" dur="3s" begin="0s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="820" cy="240" r="1.5" fill="#a855f7" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="240;220;240" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="250" r="1" fill="#06b6d4" opacity="0">
+      <animate attributeName="opacity" values="0;0.7;0" dur="3.5s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="250;230;250" dur="3.5s" begin="0.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="700" cy="30" r="1.5" fill="#7c3aed" opacity="0">
+      <animate attributeName="opacity" values="0;0.9;0" dur="5s" begin="2s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="30;10;30" dur="5s" begin="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="450" cy="260" r="1" fill="#00f5ff" opacity="0">
+      <animate attributeName="opacity" values="0;0.6;0" dur="4.5s" begin="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="260;240;260" dur="4.5s" begin="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="350" cy="20" r="1.5" fill="#a855f7" opacity="0">
+      <animate attributeName="opacity" values="0;0.7;0" dur="3.8s" begin="0.8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="20;5;20" dur="3.8s" begin="0.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="550" cy="15" r="1" fill="#06b6d4" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="4.2s" begin="2.2s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="15;0;15" dur="4.2s" begin="2.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="80" cy="200" r="2" fill="#00f5ff" opacity="0">
+      <animate attributeName="opacity" values="0;0.5;0" dur="6s" begin="3s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="200;180;200" dur="6s" begin="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="860" cy="130" r="1.5" fill="#7c3aed" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="4.8s" begin="1.2s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="130;110;130" dur="4.8s" begin="1.2s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Top accent bar with animation -->
+    <rect x="0" y="0" width="900" height="2" fill="url(#titleGrad)" opacity="0.9"/>
+
+    <!-- Bottom accent bar -->
+    <rect x="0" y="278" width="900" height="2" fill="url(#titleGrad)" opacity="0.9"/>
+
+    <!-- Left side vertical accent -->
+    <rect x="0" y="0" width="2" height="280" fill="#7c3aed" opacity="0.5"/>
+
+    <!-- Right side vertical accent -->
+    <rect x="898" y="0" width="2" height="280" fill="#06b6d4" opacity="0.5"/>
+
+    <!-- Corner nodes -->
+    <circle cx="0" cy="0" r="5" fill="#7c3aed" opacity="0.8" filter="url(#dotGlow)"/>
+    <circle cx="900" cy="0" r="5" fill="#00f5ff" opacity="0.8" filter="url(#dotGlow)"/>
+    <circle cx="0" cy="280" r="5" fill="#06b6d4" opacity="0.8" filter="url(#dotGlow)"/>
+    <circle cx="900" cy="280" r="5" fill="#a855f7" opacity="0.8" filter="url(#dotGlow)"/>
+
+    <!-- NFT badge top-left -->
+    <rect x="20" y="16" width="54" height="20" rx="4" fill="#7c3aed" opacity="0.85"/>
+    <text x="47" y="30" font-family="monospace" font-size="9" fill="#fff" text-anchor="middle" font-weight="bold">ERC-721</text>
+
+    <!-- IOTA badge top-right -->
+    <rect x="826" y="16" width="54" height="20" rx="4" fill="#0369a1" opacity="0.85"/>
+    <text x="853" y="30" font-family="monospace" font-size="9" fill="#00f5ff" text-anchor="middle" font-weight="bold">IOTA EVM</text>
+
+    <!-- Main title — typewriter reveal using clipPath animation -->
+    <text x="450" y="128" font-family="'Segoe UI', 'Arial', sans-serif" font-size="48"
+      font-weight="900" fill="url(#titleGrad)" text-anchor="middle"
+      filter="url(#glow)" letter-spacing="2">
+      IOTA DApp · NFT Lifecycle
+      <animate attributeName="opacity" values="0;0;1" dur="1.2s" fill="freeze"/>
+    </text>
+
+    <!-- Decorative underline that draws itself -->
+    <line x1="200" y1="145" x2="700" y2="145" stroke="url(#titleGrad)" stroke-width="1.5" opacity="0.5"
+      stroke-dasharray="500" stroke-dashoffset="500">
+      <animate attributeName="stroke-dashoffset" values="500;0" dur="1.5s" begin="0.8s" fill="freeze" calcMode="easeOut"/>
+    </line>
+
+    <!-- Subtitle -->
+    <text x="450" y="185" font-family="'Segoe UI', 'Arial', sans-serif" font-size="16"
+      fill="url(#subGrad)" text-anchor="middle" letter-spacing="3" opacity="0">
+      NFT-BASED LIFECYCLE MANAGEMENT FOR IIoT MANUFACTURING
+      <animate attributeName="opacity" values="0;0;0.9" dur="2.2s" fill="freeze"/>
+    </text>
+
+    <!-- Tag line -->
+    <text x="450" y="218" font-family="monospace" font-size="11"
+      fill="#00d4ff" text-anchor="middle" letter-spacing="1" opacity="0">
+      ⬡ Decentralized · Immutable · Verifiable · IPFS-Anchored ⬡
+      <animate attributeName="opacity" values="0;0;0.7" dur="3s" fill="freeze"/>
+    </text>
+
+    <!-- Bottom cluster of small status dots -->
+    <circle cx="382" cy="248" r="4" fill="#00f5ff" opacity="0.9" filter="url(#dotGlow)">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="400" cy="248" r="4" fill="#7c3aed" opacity="0.9" filter="url(#dotGlow)">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" begin="0.3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="418" cy="248" r="4" fill="#06b6d4" opacity="0.9" filter="url(#dotGlow)">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" begin="0.6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="436" cy="248" r="4" fill="#a855f7" opacity="0.9" filter="url(#dotGlow)">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" begin="0.9s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="454" cy="248" r="4" fill="#00f5ff" opacity="0.9" filter="url(#dotGlow)">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" begin="1.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="472" cy="248" r="4" fill="#7c3aed" opacity="0.9" filter="url(#dotGlow)">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" begin="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="490" cy="248" r="4" fill="#06b6d4" opacity="0.9" filter="url(#dotGlow)">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" begin="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="508" cy="248" r="4" fill="#a855f7" opacity="0.9" filter="url(#dotGlow)">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" begin="2.1s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Vignette overlay -->
+    <rect width="900" height="280" fill="url(#vignette)" opacity="0.6"/>
+  </g>
+</svg>

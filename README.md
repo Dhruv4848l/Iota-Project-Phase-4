@@ -70,33 +70,84 @@ Iota-Project-Phase-4/
 
 ---
 
-## Quick Start
+## Quick Start & Running Locally
+
+Follow these steps to run, deploy, and test the project in a local environment:
 
 ### 1. Installation
-Clone the repository and fetch the submodules containing OpenZeppelin libraries:
+Clone the repository and fetch the submodules containing the necessary OpenZeppelin libraries:
 ```bash
 git clone --recurse-submodules https://github.com/Dhruv4848l/Iota-Project-Phase-4.git
 cd Iota-Project-Phase-4
 ```
 
 ### 2. Build and Test
-Compile the contracts and run the unit integration test suite:
+Compile the Solidity smart contracts and run the unit/integration tests to verify compilation:
 ```bash
-# Compile contracts
+# Compile the decoupled contracts
 forge build
 
-# Run tests
+# Run the complete test suite (74 tests)
 forge test -vv
 ```
 
-### 3. Launch Frontend Locally
-To test MetaMask interaction locally:
+### 3. Running a Local Node & Deploying
+To test contract interaction locally:
+1. Start a local Ethereum RPC node in a terminal:
+   ```bash
+   anvil
+   ```
+2. Deploy the 7 NFT contracts and the TraceabilityPortal coordinator to the local node:
+   ```bash
+   # Running deploy script against anvil
+   forge script script/DeployV3.s.sol --rpc-url http://localhost:8545 --broadcast
+   ```
+3. Copy the deployed contract addresses printed in the terminal output and update the corresponding address constants inside the javascript block of [index.html](file:///D:/IOTA/Iota-Project-Phase-4/index.html) (e.g. `PORTAL_ADDRESS`).
+
+### 4. Launch the Frontend
+MetaMask blocks transaction requests from raw file system origins (`file://`). Host the frontend locally using a simple HTTP server:
 ```bash
-# Start a local web server (prevents MetaMask file:// origin blocks)
+# Start a local web server (defaults to port 3000)
 npx serve
 ```
-Then navigate to `http://localhost:3000` in your web browser.
+Then navigate to **`http://localhost:3000`** in your browser. Ensure MetaMask is connected to your local RPC network (`http://localhost:8545` with chain ID `31337`) or Ethereum Sepolia Testnet.
+
+---
+
+## 🏛️ System Visualizations
+
+Here is how the physical manufacturing devices, the IOTA EVM, and the 7-stage state machine interface with each other to secure the digital twin:
+
+### 1. 8-Layer IIoT Integration Flow
+The physical sensors feed data into edge devices, which compute hashes for IOTA EVM storage and link to IPFS metadata.
+![8-Layer Architecture](assets/iota_architecture_graph.png)
+
+### 2. 7-Stage State Machine Lifecycle
+Gated state transitions track the component from raw materials to manufacturing, quality checks, logistics, maintenance, and ultimate retirement.
+![Lifecycle Chart](assets/nft_lifecycle_chart.png)
+
+### 3. Digital Twin Portal Dashboard
+An interactive dashboard displaying live statistics, role qualifiers, token lookups, and transaction dispatch forms.
+![Portal Screenshot](assets/portal_ui_screenshot.png)
+
+---
+
+## 📊 Project Presentation (PPTX)
+
+A comprehensive presentation slide deck detailing the project has been generated and pushed to the repository root:
+* **[IOTA_EVM_NFT_Lifecycle_Management.pptx](file:///D:/IOTA/Iota-Project-Phase-4/IOTA_EVM_NFT_Lifecycle_Management.pptx)**
+
+### Slide Deck Contents:
+1. **The Problem We Solve:** Fragmented logs, tampering risks, audit barriers, and component fraud.
+2. **The Web3 Solution:** Layer 0 Digital Product Passport NFTs.
+3. **8-Layer System Architecture:** Device-to-Blockchain-to-Metaverse lifecycle telemetry loop.
+4. **Decoupled Contract Architecture:** Separating high-complexity operations into 7 sub-contracts.
+5. **Lifecycle State Machine:** Sequential stages, role-based transitions, and metadata freeze.
+6. **Carbon & ESG Auditing:** Logging greenhouse metrics at each stage for green audits.
+7. **Unified DApp Frontend Dashboard:** switchers, dynamic tabs, MetaMask connections, and lookups.
+8. **Roadmap & Future Vision:** AI-prognosis, machine-oracles, and W3C DIDs.
 
 ---
 
 For a deep dive into the engineering logic, AI defect rating indicators, and step-by-step metadata schemas, read [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md).
+
