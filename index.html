@@ -995,7 +995,11 @@
       </div>
       <div class="wallet-addr" id="walletAddr">Wallet Not Connected</div>
       <button class="btn btn-secondary" id="walletBtn" onclick="connectWallet()">Connect Wallet</button>
-      <div class="role-badges" id="roleBadges"></div>
+      <div id="walletActions" style="display:none;margin-top:10px;gap:10px;width:100%;">
+        <button class="btn" onclick="disconnectWallet()" style="background:#ef4444;color:white;border:none;border-radius:4px;padding:6px 8px;font-size:11px;font-weight:700;cursor:pointer;flex:1;">Disconnect</button>
+        <button class="btn" onclick="requestAccountChange()" style="background:rgba(255,255,255,0.05);color:var(--text-main);border:1px solid var(--border-color);border-radius:4px;padding:6px 8px;font-size:11px;font-weight:700;cursor:pointer;flex:1;">Switch Account</button>
+      </div>
+      <div class="role-badges" id="roleBadges" style="margin-top:10px;"></div>
     </div>
 
     <!-- Navigation Tabs -->
@@ -1232,6 +1236,7 @@
       document.getElementById('walletDot').classList.add('active');
       document.getElementById('walletAddr').textContent = `${userAddress.slice(0, 10)}...${userAddress.slice(-8)}`;
       document.getElementById('walletBtn').style.display = 'none';
+      document.getElementById('walletActions').style.display = 'flex';
 
       await loadUserRoles();
       showToast("MetaMask connection successful", "success");
@@ -1245,8 +1250,27 @@
     document.getElementById('walletDot').classList.remove('active');
     document.getElementById('walletAddr').textContent = "Wallet Not Connected";
     document.getElementById('walletBtn').style.display = 'block';
+    document.getElementById('walletActions').style.display = 'none';
     document.getElementById('roleBadges').innerHTML = '';
     signer = null; contractPortal = null; userAddress = null;
+  }
+
+  function disconnectWallet() {
+    resetWallet();
+    showToast("Wallet disconnected", "success");
+  }
+
+  async function requestAccountChange() {
+    if (!window.ethereum) return showToast("MetaMask wallet extension not detected", "error");
+    try {
+      await window.ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }]
+      });
+      await connectWallet();
+    } catch (e) {
+      showToast(e.message, "error");
+    }
   }
 
   async function loadUserRoles() {
